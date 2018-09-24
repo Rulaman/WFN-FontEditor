@@ -28,6 +28,14 @@ namespace AGS.Plugin.FontEditor
 
 		public event EventHandler OnFontModified;
 
+		private enum SizeMode
+		{
+			ChangeNothing,
+			ChangeWidth,
+			ChangeHeight,
+			ChangeBoth,
+		}
+
 		static bool ArraysEqual(byte[] a1, byte[] a2)
 		{
 			if ( a1 == a2 )
@@ -88,11 +96,17 @@ namespace AGS.Plugin.FontEditor
 		{
 			InitializeComponent();
 			LblZoom.Text = "x" + ZoomDrawingArea.Value;
+
+			numWidth.Maximum = MaxWidth;
+			numHeight.Maximum = MaxHeight;
 		}
 		public FontEditorPane(string filepath, string filename, string fontname)
 		{
 			InitializeComponent();
 			LblZoom.Text = "x" + ZoomDrawingArea.Value;
+
+			numWidth.Maximum = MaxWidth;
+			numHeight.Maximum = MaxHeight;
 
 			if ( System.IO.File.Exists(System.IO.Path.Combine(filepath, filename)) )
 			{
@@ -235,10 +249,10 @@ namespace AGS.Plugin.FontEditor
 				CFontUtils.ScaleBitmap(bitmap, out outbmp, Scalefactor);
 				picture.Image = outbmp;
 
-				CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
-				CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+				CharacterPictureList[character.Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+				CharacterPictureList[character.Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
 
-				CreateAndShow(character, false);
+				CreateAndShow(character, SizeMode.ChangeBoth);
 				CheckChange();
 			}
 		}
@@ -261,10 +275,10 @@ namespace AGS.Plugin.FontEditor
 				CFontUtils.ScaleBitmap(bitmap, out outbmp, Scalefactor);
 				picture.Image = outbmp;
 
-				CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
-				CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+				CharacterPictureList[character.Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+				CharacterPictureList[character.Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
 
-				CreateAndShow(character, false);
+				CreateAndShow(character, SizeMode.ChangeBoth);
 				CheckChange();
 			}
 		}
@@ -322,14 +336,14 @@ namespace AGS.Plugin.FontEditor
 
 				Bitmap outbmp;
 				CFontUtils.ScaleBitmap(bitmap, out outbmp, Scalefactor);
-				CharacterPictureList[Index].Image = outbmp;
-				CharacterPictureList[Index].Size = outbmp.Size;
+				CharacterPictureList[characterinfo.Index].Image = outbmp;
+				CharacterPictureList[characterinfo.Index].Size = outbmp.Size;
 
 				characterinfo.UndoRedoListTidyUp();
 				characterinfo.UndoRedoListAdd(characterinfo.ByteLines);
 
-				CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = characterinfo.UndoPossible;
-				CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = characterinfo.RedoPossible;
+				CharacterPictureList[characterinfo.Index].ContextMenu.MenuItems[0].Enabled = characterinfo.UndoPossible;
+				CharacterPictureList[characterinfo.Index].ContextMenu.MenuItems[1].Enabled = characterinfo.RedoPossible;
 
 				CheckChange();
 			}
@@ -539,12 +553,12 @@ namespace AGS.Plugin.FontEditor
 			bInEdit = false;
 			CheckChange();
 
-			CCharInfo charinfo = (CCharInfo)(CharacterPictureList[Index].Tag);
-			charinfo.UndoRedoListTidyUp();
-			charinfo.UndoRedoListAdd(charinfo.ByteLines);
+			CCharInfo characterinfo = (CCharInfo)(CharacterPictureList[Index].Tag);
+			characterinfo.UndoRedoListTidyUp();
+			characterinfo.UndoRedoListAdd(characterinfo.ByteLines);
 
-			CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = charinfo.UndoPossible;
-			CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = charinfo.RedoPossible;
+			CharacterPictureList[characterinfo.Index].ContextMenu.MenuItems[0].Enabled = characterinfo.UndoPossible;
+			CharacterPictureList[characterinfo.Index].ContextMenu.MenuItems[1].Enabled = characterinfo.RedoPossible;
 		}
 		private void DrawingArea_Paint(object sender, PaintEventArgs e)
 		{
@@ -586,21 +600,36 @@ namespace AGS.Plugin.FontEditor
 			if ( !ClickedOnCharacter )
 			{
 				CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
-				CreateAndShow(character, false);
+				CreateAndShow(character, SizeMode.ChangeBoth);
 			}
 			CheckChange();
 		}
 
-		private void CreateAndShow(CCharInfo character, bool keepOrigWidth)
+		private void CreateAndShow(CCharInfo character, SizeMode sizeMode)
 		{
-			if ( keepOrigWidth )
+			switch ( sizeMode )
 			{
-				CFontUtils.RecreateCharacter(character, character.Width, (UInt16)numHeight.Value);
-			}
-			else
-			{
-				CFontUtils.RecreateCharacter(character, (UInt16)numWidth.Value, (UInt16)numHeight.Value);
-			}
+			case SizeMode.ChangeNothing:
+				{
+					CFontUtils.RecreateCharacter(character, character.Width, character.Height);
+				}
+				break;
+			case SizeMode.ChangeBoth:
+				{
+					CFontUtils.RecreateCharacter(character, (UInt16)numWidth.Value, (UInt16)numHeight.Value);
+				}
+				break;
+			case SizeMode.ChangeHeight:
+				{
+					CFontUtils.RecreateCharacter(character, character.Width, (UInt16)numHeight.Value);
+				}
+				break;
+			case SizeMode.ChangeWidth:
+				{
+					CFontUtils.RecreateCharacter(character, (UInt16)numWidth.Value, character.Height);
+				}
+				break;
+			};
 
 			Bitmap bitmap = null;
 
@@ -609,8 +638,8 @@ namespace AGS.Plugin.FontEditor
 
 			Bitmap outbmp;
 			CFontUtils.ScaleBitmap(bitmap, out outbmp, Scalefactor);
-			CharacterPictureList[Index].Size = outbmp.Size;
-			CharacterPictureList[Index].Image = outbmp;
+			CharacterPictureList[character.Index].Size = outbmp.Size;
+			CharacterPictureList[character.Index].Image = outbmp;
 
 			Bitmap drawingbitmap;
 			CFontUtils.ScaleBitmap(bitmap, out drawingbitmap, ZoomDrawingArea.Value);
@@ -657,10 +686,10 @@ namespace AGS.Plugin.FontEditor
 			character.UndoRedoListTidyUp();
 			character.UndoRedoListAdd(character.ByteLines);
 
-			CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
-			CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
 
-			CreateAndShow(character, false);
+			CreateAndShow(character, SizeMode.ChangeNothing);
 			CheckChange();
 		}
 		private void BtnFill_Click(object sender, EventArgs e)
@@ -675,10 +704,10 @@ namespace AGS.Plugin.FontEditor
 			character.UndoRedoListTidyUp();
 			character.UndoRedoListAdd(character.ByteLines);
 
-			CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
-			CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
 
-			CreateAndShow(character, false);
+			CreateAndShow(character, SizeMode.ChangeNothing);
 			CheckChange();
 		}
 
@@ -702,17 +731,17 @@ namespace AGS.Plugin.FontEditor
 				System.Runtime.InteropServices.Marshal.Copy(shiftarray, 0, ptrbegin, bmpData.Stride * Selected.Height);
 				Selected.UnlockBits(bmpData);
 
-				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[Index].Tag), Selected);
-				((CCharInfo)(CharacterPictureList[Index].Tag)).UnscaledImage = Selected;
+				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[character.Index].Tag), Selected);
+				((CCharInfo)(CharacterPictureList[character.Index].Tag)).UnscaledImage = Selected;
 			}
 
 			character.UndoRedoListTidyUp();
 			character.UndoRedoListAdd(character.ByteLines);
 
-			CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
-			CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
 
-			CreateAndShow(character, false);
+			CreateAndShow(character, SizeMode.ChangeNothing);
 			CheckChange();
 		}
 		private void BtnShiftDown_Click(object sender, EventArgs e)
@@ -735,17 +764,17 @@ namespace AGS.Plugin.FontEditor
 				System.Runtime.InteropServices.Marshal.Copy(shiftarray, 0, ptrbegin, bmpData.Stride * Selected.Height);
 				Selected.UnlockBits(bmpData);
 
-				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[Index].Tag), Selected);
-				((CCharInfo)(CharacterPictureList[Index].Tag)).UnscaledImage = Selected;
+				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[character.Index].Tag), Selected);
+				((CCharInfo)(CharacterPictureList[character.Index].Tag)).UnscaledImage = Selected;
 			}
 
 			character.UndoRedoListTidyUp();
 			character.UndoRedoListAdd(character.ByteLines);
 
-			CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
-			CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
 
-			CreateAndShow(character, false);
+			CreateAndShow(character, SizeMode.ChangeNothing);
 			CheckChange();
 		}
 		private void BtnShiftLeft_Click(object sender, EventArgs e)
@@ -783,17 +812,17 @@ namespace AGS.Plugin.FontEditor
 
 				Selected.UnlockBits(bmpData);
 
-				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[Index].Tag), Selected);
-				((CCharInfo)(CharacterPictureList[Index].Tag)).UnscaledImage = Selected;
+				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[character.Index].Tag), Selected);
+				((CCharInfo)(CharacterPictureList[character.Index].Tag)).UnscaledImage = Selected;
 			}
 
 			character.UndoRedoListTidyUp();
 			character.UndoRedoListAdd(character.ByteLines);
 
-			CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
-			CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
 
-			CreateAndShow(character, false);
+			CreateAndShow(character, SizeMode.ChangeNothing);
 			CheckChange();
 		}
 		private void BtnShiftRight_Click(object sender, EventArgs e)
@@ -831,33 +860,33 @@ namespace AGS.Plugin.FontEditor
 
 				Selected.UnlockBits(bmpData);
 
-				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[Index].Tag), Selected);
-				((CCharInfo)(CharacterPictureList[Index].Tag)).UnscaledImage = Selected;
+				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[character.Index].Tag), Selected);
+				((CCharInfo)(CharacterPictureList[character.Index].Tag)).UnscaledImage = Selected;
 			}
 
 			character.UndoRedoListTidyUp();
 			character.UndoRedoListAdd(character.ByteLines);
 
-			CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
-			CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
 
-			CreateAndShow(character, false);
+			CreateAndShow(character, SizeMode.ChangeNothing);
 			CheckChange();
 		}
 
-		private void BtnSetAllHeight_Click(object sender, EventArgs e)
-		{
-			foreach ( PictureBox item in CharacterPictureList )
-			{
-				if ( !ClickedOnCharacter )
-				{
-					CCharInfo character = ((CCharInfo)(item.Tag));
-					CreateAndShow(character, true);
-				}
-			}
+		//private void BtnSetAllHeight_Click(object sender, EventArgs e)
+		//{
+		//    foreach ( PictureBox item in CharacterPictureList )
+		//    {
+		//        if ( !ClickedOnCharacter )
+		//        {
+		//            CCharInfo character = ((CCharInfo)(item.Tag));
+		//            CreateAndShow(character, SizeMode.ChangeHeight);
+		//        }
+		//    }
 
-			CheckChange();
-		}
+		//    CheckChange();
+		//}
 
 		private void ChkGrid_CheckedChanged(object sender, EventArgs e)
 		{
@@ -895,8 +924,8 @@ namespace AGS.Plugin.FontEditor
 
 				Selected.UnlockBits(bmpData);
 
-				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[Index].Tag), Selected);
-				((CCharInfo)(CharacterPictureList[Index].Tag)).UnscaledImage = Selected;
+				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[character.Index].Tag), Selected);
+				((CCharInfo)(CharacterPictureList[character.Index].Tag)).UnscaledImage = Selected;
 			}
 
 			ClickedOnCharacter = true;
@@ -907,10 +936,10 @@ namespace AGS.Plugin.FontEditor
 			character.UndoRedoListTidyUp();
 			character.UndoRedoListAdd(character.ByteLines);
 
-			CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
-			CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
 
-			CreateAndShow(character, false);
+			CreateAndShow(character, SizeMode.ChangeNothing);
 			CheckChange();
 		}
 
@@ -950,17 +979,17 @@ namespace AGS.Plugin.FontEditor
 
 				Selected.UnlockBits(bmpData);
 
-				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[Index].Tag), Selected);
-				((CCharInfo)(CharacterPictureList[Index].Tag)).UnscaledImage = Selected;
+				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[character.Index].Tag), Selected);
+				((CCharInfo)(CharacterPictureList[character.Index].Tag)).UnscaledImage = Selected;
 			}
 
 			character.UndoRedoListTidyUp();
 			character.UndoRedoListAdd(character.ByteLines);
 
-			CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
-			CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
 
-			CreateAndShow(character, false);
+			CreateAndShow(character, SizeMode.ChangeNothing);
 			CheckChange();
 		}
 		private void BtnSwapVertically_Click(object sender, EventArgs e)
@@ -984,12 +1013,12 @@ namespace AGS.Plugin.FontEditor
 
 					UInt32 temp = 0;
 					UInt32 temp2 = 0;
-					UInt32 temp3 = 0;
+					//UInt32 temp3 = 0;
 
 					for(int cnti=0;cnti<32;cnti++)
 					{
 						temp2 = line >> (32-(cnti+1));
-						temp3 = (UInt32)(1 << (cnti+1));
+						//temp3 = (UInt32)(1 << (cnti+1));
 
 						temp |= (temp2&1) << cnti;
 					}
@@ -1006,17 +1035,17 @@ namespace AGS.Plugin.FontEditor
 
 				Selected.UnlockBits(bmpData);
 
-				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[Index].Tag), Selected);
-				((CCharInfo)(CharacterPictureList[Index].Tag)).UnscaledImage = Selected;
+				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[character.Index].Tag), Selected);
+				((CCharInfo)(CharacterPictureList[character.Index].Tag)).UnscaledImage = Selected;
 			}
 
 			character.UndoRedoListTidyUp();
 			character.UndoRedoListAdd(character.ByteLines);
 
-			CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
-			CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
 
-			CreateAndShow(character, false);
+			CreateAndShow(character, SizeMode.ChangeNothing);
 			CheckChange();
 		}
 	}

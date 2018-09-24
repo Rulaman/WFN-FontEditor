@@ -57,7 +57,7 @@ namespace WFN_FontEditor
 
 			}
 
-			if ( !bFound )
+			if ( !bFound && pane != null )
 			{
 				FontEditorPane fep = new FontEditorPane(pane.Filepath, pane.Filename, pane.Fontname);
 				fep.OnFontModified += new EventHandler(fep_OnFontModified);
