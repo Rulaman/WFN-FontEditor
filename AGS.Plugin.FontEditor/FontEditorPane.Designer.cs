@@ -54,6 +54,8 @@
 			this.DrawingArea = new System.Windows.Forms.PictureBox();
 			this.BtnSwapHorizontally = new System.Windows.Forms.Button();
 			this.BtnSwapVertically = new System.Windows.Forms.Button();
+			this.BtnOutline = new System.Windows.Forms.Button();
+			this.BtnOutlineFont = new System.Windows.Forms.Button();
 			this.GroupBox.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.ZoomDrawingArea)).BeginInit();
 			this.PanelSize.SuspendLayout();
@@ -334,10 +336,32 @@
 			this.BtnSwapVertically.UseVisualStyleBackColor = true;
 			this.BtnSwapVertically.Click += new System.EventHandler(this.BtnSwapVertically_Click);
 			// 
+			// BtnOutline
+			// 
+			this.BtnOutline.Location = new System.Drawing.Point(626, 9);
+			this.BtnOutline.Name = "BtnOutline";
+			this.BtnOutline.Size = new System.Drawing.Size(75, 23);
+			this.BtnOutline.TabIndex = 18;
+			this.BtnOutline.Text = "Outline";
+			this.BtnOutline.UseVisualStyleBackColor = true;
+			this.BtnOutline.Click += new System.EventHandler(this.BtnOutline_Click);
+			// 
+			// BtnOutlineFont
+			// 
+			this.BtnOutlineFont.Location = new System.Drawing.Point(626, 34);
+			this.BtnOutlineFont.Name = "BtnOutlineFont";
+			this.BtnOutlineFont.Size = new System.Drawing.Size(75, 23);
+			this.BtnOutlineFont.TabIndex = 18;
+			this.BtnOutlineFont.Text = "Outline Font";
+			this.BtnOutlineFont.UseVisualStyleBackColor = true;
+			this.BtnOutlineFont.Click += new System.EventHandler(this.BtnOutlineFont_Click);
+			// 
 			// FontEditorPane
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			this.Controls.Add(this.BtnOutlineFont);
+			this.Controls.Add(this.BtnOutline);
 			this.Controls.Add(this.BtnSwapVertically);
 			this.Controls.Add(this.BtnSwapHorizontally);
 			this.Controls.Add(this.PanelMouseColor);
@@ -399,5 +423,7 @@
 		private System.Windows.Forms.Label LblLeft;
 		private System.Windows.Forms.Button BtnSwapHorizontally;
 		private System.Windows.Forms.Button BtnSwapVertically;
+		private System.Windows.Forms.Button BtnOutline;
+		private System.Windows.Forms.Button BtnOutlineFont;
 	}
 }

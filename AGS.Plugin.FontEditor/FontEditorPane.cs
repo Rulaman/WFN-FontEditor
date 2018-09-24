@@ -17,7 +17,7 @@ namespace AGS.Plugin.FontEditor
 		private bool bInEdit = false;
 		private Point EditPoint;
 		private Int32 Scalefactor = 2;
-		private CWFNFontInfo FontInfo;
+		private CFontInfo FontInfo;
 		private const Int32 MaxWidth = 32;
 		private const Int32 MaxHeight = 32;
 		private bool ClickedOnCharacter = false;
@@ -110,7 +110,14 @@ namespace AGS.Plugin.FontEditor
 
 			if ( System.IO.File.Exists(System.IO.Path.Combine(filepath, filename)) )
 			{
-				FontInfo = new CWFNFontInfo();
+				if ( System.IO.Path.GetExtension(filename).ToLower() == ".wfn" )
+				{
+					FontInfo = new CWFNFontInfo();
+				}
+				else if ( System.IO.Path.GetFileNameWithoutExtension(filename).ToLower() == "font" )
+				{
+					FontInfo = new CSCIFontInfo();
+				}
 
 				FontInfo.FontPath = System.IO.Path.Combine(filepath, filename);
 				FontInfo.FontName = fontname;
@@ -228,6 +235,99 @@ namespace AGS.Plugin.FontEditor
 				corrected = null;
 				return false;
 			}
+		}
+		private void OutlineCharacter(Int32 index)
+		{
+			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[index]).Tag));
+			Bitmap Selected;
+
+			if ( null != (Selected = (Bitmap)(character.UnscaledImage)) )
+			{
+				BitmapData bmpData = Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
+				IntPtr ptrbegin = bmpData.Scan0;
+				IntPtr ptrwrite = bmpData.Scan0;
+				byte[] linearray = new byte[bmpData.Stride];
+				UInt32 line;
+				UInt32 temp2;
+
+				bool[,] bitarray = new bool[bmpData.Stride * 8, bmpData.Height];
+				bool[,] bitarraynew = new bool[bmpData.Stride * 8, bmpData.Height];
+
+				for ( int ycnt = 0; ycnt < Selected.Height; ycnt++ )
+				{
+					System.Runtime.InteropServices.Marshal.Copy(ptrbegin, linearray, 0, bmpData.Stride);
+					Array.Reverse(linearray);
+					line = BitConverter.ToUInt32(linearray, 0);
+
+					for ( int cnti = 0; cnti < MaxWidth; cnti++ )
+					{
+						temp2 = line >> (MaxWidth - (cnti + 1));
+
+						if ( (temp2 & 1) > 0 )
+						{
+							bitarray[cnti, ycnt] = true;
+						}
+					}
+
+					ptrbegin = (IntPtr)(((int)ptrbegin + bmpData.Stride));
+				}
+
+				for ( int cnt = 0; cnt < Selected.Height; cnt++ )
+				{
+					for ( int innercnt = 0; innercnt < MaxWidth; innercnt++ )
+					{
+						if ( bitarray[innercnt, cnt] )
+						{
+							/* set four pixel in the corner, if they don't set */
+							if ( ((innercnt - 1) >= 0) && ((cnt - 1) >= 0) ) { bitarraynew[innercnt - 1, cnt - 1] = bitarray[innercnt - 1, cnt - 1] == true ? false : true; }
+							if ( ((innercnt - 1) >= 0) && ((cnt + 1) < bmpData.Height) ) { bitarraynew[innercnt - 1, cnt + 1] = bitarray[innercnt - 1, cnt + 1] == true ? false : true; }
+							if ( ((innercnt + 1) < (bmpData.Stride * 8)) && ((cnt - 1) >= 0) ) { bitarraynew[innercnt + 1, cnt - 1] = bitarray[innercnt + 1, cnt - 1] == true ? false : true; }
+							if ( ((innercnt + 1) < (bmpData.Stride * 8)) && ((cnt + 1) < bmpData.Height) ) { bitarraynew[innercnt + 1, cnt + 1] = bitarray[innercnt + 1, cnt + 1] == true ? false : true; }
+
+							/* set the pixel left and right */
+							if ( ((innercnt - 1) >= 0) ) { bitarraynew[innercnt - 1, cnt] = bitarray[innercnt - 1, cnt] == true ? false : true; }
+							if ( ((innercnt + 1) < (bmpData.Stride * 8)) ) { bitarraynew[innercnt + 1, cnt] = bitarray[innercnt + 1, cnt] == true ? false : true; }
+
+							/* set the pixel upper and lower */
+							if (  ((cnt - 1) >= 0) ) { bitarraynew[innercnt, cnt - 1] = bitarray[innercnt, cnt - 1] == true ? false : true; }
+							if ( ((cnt + 1) < bmpData.Height) ) { bitarraynew[innercnt, cnt + 1] = bitarray[innercnt, cnt + 1] == true ? false : true; }
+						}
+					}
+				}
+
+				for ( int ycnt2 = 0; ycnt2 < Selected.Height; ycnt2++ )
+				{
+					line = 0;
+
+					for ( int cnti = 0; cnti < MaxWidth; cnti++ )
+					{
+						if ( bitarraynew[cnti, ycnt2] )
+						{
+							line |= (UInt32)(0x80000000 >> (cnti));
+						}
+					}
+
+					linearray = BitConverter.GetBytes(line);
+					Array.Reverse(linearray);
+					System.Runtime.InteropServices.Marshal.Copy(linearray, 0, ptrwrite, bmpData.Stride);
+
+					ptrwrite = (IntPtr)(((int)ptrwrite + bmpData.Stride));
+				}
+
+				Selected.UnlockBits(bmpData);
+
+				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[character.Index].Tag), Selected);
+				((CCharInfo)(CharacterPictureList[character.Index].Tag)).UnscaledImage = Selected;
+			}
+
+			character.UndoRedoListTidyUp();
+			character.UndoRedoListAdd(character.ByteLines);
+
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+
+			CreateAndShow(character, SizeMode.ChangeNothing);
+			CheckChange();
 		}
 
 		void MenuUndoClicked(object sender, EventArgs e)
@@ -1047,6 +1147,20 @@ namespace AGS.Plugin.FontEditor
 
 			CreateAndShow(character, SizeMode.ChangeNothing);
 			CheckChange();
+		}
+
+		private void BtnOutline_Click(object sender, EventArgs e)
+		{
+			OutlineCharacter(Index);
+		}
+
+		
+		private void BtnOutlineFont_Click(object sender, EventArgs e)
+		{
+			for ( Int32 counter = 0; counter < CharacterPictureList.Count; counter++ )
+			{
+				OutlineCharacter(counter);
+			}
 		}
 	}
 }

@@ -33,6 +33,9 @@
 			this.TabControl = new System.Windows.Forms.TabControl();
 			this.BtnSave = new System.Windows.Forms.Button();
 			this.FontListBox = new System.Windows.Forms.ListBox();
+			this.BtnConvert = new System.Windows.Forms.Button();
+			this.TxtTextHeight = new System.Windows.Forms.TextBox();
+			this.LblTextHeight = new System.Windows.Forms.Label();
 			this.SuspendLayout();
 			// 
 			// BtnOpen
@@ -77,19 +80,52 @@
 			this.FontListBox.TabIndex = 3;
 			this.FontListBox.SelectedIndexChanged += new System.EventHandler(this.FontListBox_SelectedIndexChanged);
 			// 
+			// BtnConvert
+			// 
+			this.BtnConvert.Location = new System.Drawing.Point(250, 12);
+			this.BtnConvert.Name = "BtnConvert";
+			this.BtnConvert.Size = new System.Drawing.Size(113, 23);
+			this.BtnConvert.TabIndex = 1;
+			this.BtnConvert.Text = "Convert selected";
+			this.BtnConvert.UseVisualStyleBackColor = true;
+			this.BtnConvert.Click += new System.EventHandler(this.BtnConvert_Click);
+			// 
+			// TxtTextHeight
+			// 
+			this.TxtTextHeight.Location = new System.Drawing.Point(434, 14);
+			this.TxtTextHeight.MaxLength = 3;
+			this.TxtTextHeight.Name = "TxtTextHeight";
+			this.TxtTextHeight.Size = new System.Drawing.Size(43, 20);
+			this.TxtTextHeight.TabIndex = 4;
+			this.TxtTextHeight.Text = "9";
+			this.TxtTextHeight.TextChanged += new System.EventHandler(this.TxtTextHeight_TextChanged);
+			// 
+			// LblTextHeight
+			// 
+			this.LblTextHeight.AutoSize = true;
+			this.LblTextHeight.Location = new System.Drawing.Point(369, 17);
+			this.LblTextHeight.Name = "LblTextHeight";
+			this.LblTextHeight.Size = new System.Drawing.Size(59, 13);
+			this.LblTextHeight.TabIndex = 5;
+			this.LblTextHeight.Text = "text height:";
+			// 
 			// MainWindow
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(981, 580);
+			this.Controls.Add(this.LblTextHeight);
+			this.Controls.Add(this.TxtTextHeight);
 			this.Controls.Add(this.FontListBox);
 			this.Controls.Add(this.TabControl);
+			this.Controls.Add(this.BtnConvert);
 			this.Controls.Add(this.BtnSave);
 			this.Controls.Add(this.BtnOpen);
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.Name = "MainWindow";
 			this.Text = "WFN-FontEditor";
 			this.ResumeLayout(false);
+			this.PerformLayout();
 
 		}
 
@@ -99,6 +135,9 @@
 		private System.Windows.Forms.TabControl TabControl;
 		private System.Windows.Forms.Button BtnSave;
 		private System.Windows.Forms.ListBox FontListBox;
+		private System.Windows.Forms.Button BtnConvert;
+		private System.Windows.Forms.TextBox TxtTextHeight;
+		private System.Windows.Forms.Label LblTextHeight;
 	}
 }
 

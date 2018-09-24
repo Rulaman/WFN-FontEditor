@@ -94,26 +94,53 @@ namespace AGS.Plugin.FontEditor
 			return true;
 		}
 	}
-	public class CWFNFontInfo
+
+	public abstract class CFontInfo
 	{
 		public string		FontPath;
 		public string		FontName;
 		public string		WFNName;
 		public CCharInfo[]	Character;
 		public Int16		NumberOfCharacters;
+		public UInt16		TextHeight; // only SCI fonts
 
-		private byte[] StringToByteArray(string str)
+		protected byte[] StringToByteArray(string str)
 		{
 			System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
 			return enc.GetBytes(str);
 		}
-		private string ByteArrayToString(byte[] arr)
+		protected string ByteArrayToString(byte[] arr)
 		{
 			System.Text.ASCIIEncoding enc = new System.Text.ASCIIEncoding();
 			return enc.GetString(arr);
 		}
+		public abstract void Read(System.IO.BinaryReader binaryReader);
+		public abstract void Write(System.IO.BinaryWriter binaryWriter);
 
-		public void Read(System.IO.BinaryReader binaryReader)
+		public void Read(string filename)
+		{
+			System.IO.FileStream file = System.IO.File.Open(filename, System.IO.FileMode.Open);
+			System.IO.BinaryReader binaryReader = new System.IO.BinaryReader(file);
+
+			Read(binaryReader);
+
+			binaryReader.Close();
+			file.Close();
+		}
+		public void Write(string filename)
+		{
+			System.IO.FileStream file = System.IO.File.Open(filename, System.IO.FileMode.Open);
+			System.IO.BinaryWriter binaryWriter = new System.IO.BinaryWriter(file);
+
+			Write(binaryWriter);
+
+			binaryWriter.Close();
+			file.Close();
+		}
+	}
+	public class CWFNFontInfo: CFontInfo
+	{
+		public override void Read(System.IO.BinaryReader binaryReader)
 		{
 			byte[] name = binaryReader.ReadBytes(15);
 			WFNName = ByteArrayToString(name);
@@ -158,9 +185,14 @@ namespace AGS.Plugin.FontEditor
 				}
 			}
 		}
-		public void Write(System.IO.BinaryWriter binaryWriter)
+		public override void Write(System.IO.BinaryWriter binaryWriter)
 		{
 			Int64 PositionOfChars = 0;
+
+			if ( (WFNName == null) || (WFNName == "") )
+			{
+				WFNName = "WGT Font File  ";
+			}
 			binaryWriter.Write(StringToByteArray(WFNName));
 			binaryWriter.Write((UInt16)1); // Dummy, because offset is not yet known
 
@@ -190,6 +222,97 @@ namespace AGS.Plugin.FontEditor
 
 			binaryWriter.BaseStream.Position = 15;
 			binaryWriter.Write((UInt16)PositionOfChars);
+		}
+	}
+	public class CSCIFontInfo: CFontInfo
+	{
+		public override void Read(System.IO.BinaryReader binaryReader)
+		{
+			UInt16 resourcename	= binaryReader.ReadUInt16();
+			UInt16 alwayszero	= binaryReader.ReadUInt16();
+			NumberOfCharacters	= binaryReader.ReadInt16();
+			TextHeight			= binaryReader.ReadUInt16();
+
+			UInt16[] positionArray = new UInt16[NumberOfCharacters];
+			Character = new CCharInfo[NumberOfCharacters];
+
+			for ( int counter = 0; counter < NumberOfCharacters; counter++ )
+			{
+				positionArray[counter] = (UInt16)(binaryReader.ReadUInt16() + 2);
+			}
+
+			for ( int counter = 0; counter < NumberOfCharacters; counter++ )
+			{
+				binaryReader.BaseStream.Position = positionArray[counter];
+
+				Character[counter] = new CCharInfo();
+
+				Character[counter].Index = counter;
+				Character[counter].Width = binaryReader.ReadByte();
+				Character[counter].Height = binaryReader.ReadByte();
+
+				Character[counter].WidthOriginal = Character[counter].Width;
+				Character[counter].HeightOriginal = Character[counter].Height;
+
+				if ( counter == NumberOfCharacters - 1 )
+				{
+					Character[NumberOfCharacters - 1].ByteLines = binaryReader.ReadBytes((UInt16)(binaryReader.BaseStream.Length - (positionArray[counter]+2)));
+					Character[NumberOfCharacters - 1].ByteLinesOriginal = new byte[Character[NumberOfCharacters - 1].ByteLines.Length];
+					Array.Copy(Character[NumberOfCharacters - 1].ByteLines, Character[NumberOfCharacters - 1].ByteLinesOriginal, Character[NumberOfCharacters - 1].ByteLines.Length);
+				}
+				else
+				{
+					Character[counter].ByteLines = binaryReader.ReadBytes(positionArray[counter + 1] - (positionArray[counter]+2));
+					Character[counter].ByteLinesOriginal = new byte[Character[counter].ByteLines.Length];
+					Array.Copy(Character[counter].ByteLines, Character[counter].ByteLinesOriginal, Character[counter].ByteLines.Length);
+				}
+			}
+		}
+		public override void Write(System.IO.BinaryWriter binaryWriter)
+		{
+			binaryWriter.Write((UInt16)0x87);
+			binaryWriter.Write((UInt16)0x00);
+			binaryWriter.Write((UInt16)Character.Length);
+
+			if ( TextHeight == 0 )
+			{
+				binaryWriter.Write((UInt16)9); // assume some value
+			}
+			else
+			{
+				binaryWriter.Write((UInt16)TextHeight);
+			}
+
+			Int64 offset = binaryWriter.BaseStream.Position;
+
+			foreach ( CCharInfo item in Character )
+			{
+				/* write some value, for later offset */
+				binaryWriter.Write((UInt16)0);
+			}
+
+			UInt16[] positionArray = new UInt16[Character.Length];
+
+			foreach ( CCharInfo item in Character )
+			{
+				positionArray[item.Index] = (UInt16)binaryWriter.BaseStream.Position;
+
+				binaryWriter.Write((byte)item.Width);
+				binaryWriter.Write((byte)item.Height);
+				binaryWriter.Write(item.ByteLines);
+
+				item.WidthOriginal = item.Width;
+				item.HeightOriginal = item.Height;
+				item.ByteLinesOriginal = new byte[item.ByteLines.Length];
+				Array.Copy(item.ByteLines, item.ByteLinesOriginal, item.ByteLines.Length);
+			}
+
+			binaryWriter.BaseStream.Position = offset;
+
+			for ( int counter = 0; counter < Character.Length; counter++ )
+			{
+				binaryWriter.Write((UInt16)(positionArray[counter]-2));
+			}
 		}
 	}
 
@@ -292,7 +415,7 @@ namespace AGS.Plugin.FontEditor
 
 			bmp.UnlockBits(bmpData);
 		}
-		public static void SaveOneFont(CWFNFontInfo font)
+		public static void SaveOneFont(CFontInfo font)
 		{
 			string filename = System.IO.Path.GetFileName(font.FontPath);
 			string filepath = System.IO.Path.GetDirectoryName(font.FontPath);
