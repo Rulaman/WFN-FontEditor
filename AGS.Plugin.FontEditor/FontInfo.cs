@@ -13,6 +13,9 @@ namespace AGS.Plugin.FontEditor
 		public UInt16 WidthOriginal;
 		public UInt16 HeightOriginal;
 		public byte[] ByteLinesOriginal;
+
+		public Image UnscaledImage;
+		public Int32 Index;
 	}
 	public class CFontInfo
 	{
@@ -20,6 +23,7 @@ namespace AGS.Plugin.FontEditor
 		public string FontName;
 		public string WFNName;
 		public CCharInfo[] Character;
+		public Int16 NumberOfCharacters;
 
 		private byte[] StringToByteArray(string str)
 		{
@@ -37,34 +41,37 @@ namespace AGS.Plugin.FontEditor
 			byte[] name = binaryReader.ReadBytes(15);
 			WFNName = ByteArrayToString(name);
 			UInt16 offset = binaryReader.ReadUInt16();
-			Character = new CCharInfo[128];
+			
 			binaryReader.BaseStream.Position = offset;
 
-			UInt16[] positionArray = new UInt16[128];
+			NumberOfCharacters = (Int16)((binaryReader.BaseStream.Length - offset) / 2);
 
-			for ( int counter = 0; counter < 128; counter++ )
+			UInt16[] positionArray = new UInt16[NumberOfCharacters];
+			Character = new CCharInfo[NumberOfCharacters];
+
+			for ( int counter = 0; counter < NumberOfCharacters; counter++ )
 			{
 				positionArray[counter] = binaryReader.ReadUInt16();
 			}
 
-			for ( int counter = 0; counter < 128; counter++ )
+			for ( int counter = 0; counter < NumberOfCharacters; counter++ )
 			{
-				/* nur 127 Zeichen lesen; das letzte Zeichen gesondert */
 				binaryReader.BaseStream.Position = positionArray[counter];
 
 				Character[counter] = new CCharInfo();
 
+				Character[counter].Index = counter;
 				Character[counter].Width = binaryReader.ReadUInt16();
 				Character[counter].Height = binaryReader.ReadUInt16();
 
 				Character[counter].WidthOriginal = Character[counter].Width;
 				Character[counter].HeightOriginal = Character[counter].Height;
 
-				if ( counter == 127 )
+				if ( counter == NumberOfCharacters - 1 )
 				{
-					Character[127].ByteLines = binaryReader.ReadBytes(offset - positionArray[counter] - 4);
-					Character[127].ByteLinesOriginal = new byte[Character[127].ByteLines.Length];
-					Array.Copy(Character[127].ByteLines, Character[127].ByteLinesOriginal, Character[127].ByteLines.Length);
+					Character[NumberOfCharacters - 1].ByteLines = binaryReader.ReadBytes(offset - positionArray[counter] - 4);
+					Character[NumberOfCharacters - 1].ByteLinesOriginal = new byte[Character[NumberOfCharacters - 1].ByteLines.Length];
+					Array.Copy(Character[NumberOfCharacters - 1].ByteLines, Character[NumberOfCharacters - 1].ByteLinesOriginal, Character[NumberOfCharacters - 1].ByteLines.Length);
 				}
 				else
 				{
@@ -217,6 +224,15 @@ namespace AGS.Plugin.FontEditor
 
 			binaryWriter.Close();
 			fs.Close();
+		}
+		public static void ScaleBitmap(Bitmap bitmap, out Bitmap newbmp, Int32 scale)
+		{
+			// Bitmap skalieren
+			newbmp = new Bitmap(bitmap, bitmap.Width * scale, bitmap.Height * scale);
+			Graphics g = Graphics.FromImage(newbmp);
+			g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+			g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
+			g.DrawImage(bitmap, 0, 0, newbmp.Width, newbmp.Height);
 		}
 	}
 }

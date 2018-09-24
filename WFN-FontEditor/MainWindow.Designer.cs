@@ -29,21 +29,14 @@
 		private void InitializeComponent()
 		{
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
-			this.LocalFontEditor = new AGS.Plugin.FontEditor.FontEditor();
 			this.BtnOpen = new System.Windows.Forms.Button();
+			this.TabControl = new System.Windows.Forms.TabControl();
+			this.BtnSave = new System.Windows.Forms.Button();
 			this.SuspendLayout();
-			// 
-			// LocalFontEditor
-			// 
-			this.LocalFontEditor.BackColor = System.Drawing.Color.Gainsboro;
-			this.LocalFontEditor.Location = new System.Drawing.Point(0, 0);
-			this.LocalFontEditor.Name = "LocalFontEditor";
-			this.LocalFontEditor.Size = new System.Drawing.Size(478, 379);
-			this.LocalFontEditor.TabIndex = 0;
 			// 
 			// BtnOpen
 			// 
-			this.BtnOpen.Location = new System.Drawing.Point(12, 6);
+			this.BtnOpen.Location = new System.Drawing.Point(12, 12);
 			this.BtnOpen.Name = "BtnOpen";
 			this.BtnOpen.Size = new System.Drawing.Size(113, 23);
 			this.BtnOpen.TabIndex = 1;
@@ -51,13 +44,35 @@
 			this.BtnOpen.UseVisualStyleBackColor = true;
 			this.BtnOpen.Click += new System.EventHandler(this.BtnOpen_Click);
 			// 
+			// TabControl
+			// 
+			this.TabControl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+						| System.Windows.Forms.AnchorStyles.Left)
+						| System.Windows.Forms.AnchorStyles.Right)));
+			this.TabControl.Location = new System.Drawing.Point(12, 41);
+			this.TabControl.Name = "TabControl";
+			this.TabControl.SelectedIndex = 0;
+			this.TabControl.Size = new System.Drawing.Size(957, 527);
+			this.TabControl.TabIndex = 2;
+			// 
+			// BtnSave
+			// 
+			this.BtnSave.Location = new System.Drawing.Point(131, 12);
+			this.BtnSave.Name = "BtnSave";
+			this.BtnSave.Size = new System.Drawing.Size(113, 23);
+			this.BtnSave.TabIndex = 1;
+			this.BtnSave.Text = "Save";
+			this.BtnSave.UseVisualStyleBackColor = true;
+			this.BtnSave.Click += new System.EventHandler(this.BtnSave_Click);
+			// 
 			// MainWindow
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(506, 408);
+			this.ClientSize = new System.Drawing.Size(981, 580);
+			this.Controls.Add(this.TabControl);
+			this.Controls.Add(this.BtnSave);
 			this.Controls.Add(this.BtnOpen);
-			this.Controls.Add(this.LocalFontEditor);
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.Name = "MainWindow";
 			this.Text = "WFN-FontEditor";
@@ -67,8 +82,9 @@
 
 		#endregion
 
-		private AGS.Plugin.FontEditor.FontEditor LocalFontEditor;
 		private System.Windows.Forms.Button BtnOpen;
+		private System.Windows.Forms.TabControl TabControl;
+		private System.Windows.Forms.Button BtnSave;
 	}
 }
 

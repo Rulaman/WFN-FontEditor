@@ -53,7 +53,7 @@ namespace AGS.Plugin.FontEditor
 			InitPictures();
 		}
 
-		public void AddFontToList(string filepath, string filename, string fontname)
+		public bool AddFontToList(string filepath, string filename, string fontname)
 		{
 			if ( System.IO.File.Exists(System.IO.Path.Combine(filepath, filename)) )
 			{
@@ -95,37 +95,43 @@ namespace AGS.Plugin.FontEditor
 						file.Close();
 					}
 				}
+				return true;
 			}
+
+			return false;
 		}
 		public void PaintCharacter(Bitmap bitmap, Graphics graphics)
 		{
-			bool bCreated = false;
-
-			if ( graphics == null )
+			if ( null != bitmap )
 			{
-				graphics = PictSelectedCharacter.CreateGraphics();
-				bCreated = true;
-			}
+				bool bCreated = false;
 
-			PictSelectedCharacter.Width = bitmap.Width * 10;
-			PictSelectedCharacter.Height = bitmap.Height * 10;
-
-			graphics.FillRectangle(new SolidBrush(Color.Gray), new Rectangle(0, 0, PictSelectedCharacter.Width, PictSelectedCharacter.Height));
-
-			for ( int counter = 0; counter < bitmap.Width; counter++ )
-			{
-				for ( int innercounter = 0; innercounter < bitmap.Height; innercounter++ )
+				if ( graphics == null )
 				{
-					Color pixelColor = bitmap.GetPixel(counter, innercounter);
-
-					Brush solidBrush = new SolidBrush(pixelColor);
-					graphics.FillRectangle(solidBrush, new Rectangle(counter * 10, innercounter * 10, 10, 10));
+					graphics = PictSelectedCharacter.CreateGraphics();
+					bCreated = true;
 				}
-			}
 
-			if ( bCreated )
-			{
-				graphics.Dispose();
+				PictSelectedCharacter.Width = bitmap.Width * 10;
+				PictSelectedCharacter.Height = bitmap.Height * 10;
+
+				graphics.FillRectangle(new SolidBrush(Color.Gray), new Rectangle(0, 0, PictSelectedCharacter.Width, PictSelectedCharacter.Height));
+
+				for ( int counter = 0; counter < bitmap.Width; counter++ )
+				{
+					for ( int innercounter = 0; innercounter < bitmap.Height; innercounter++ )
+					{
+						Color pixelColor = bitmap.GetPixel(counter, innercounter);
+
+						Brush solidBrush = new SolidBrush(pixelColor);
+						graphics.FillRectangle(solidBrush, new Rectangle(counter * 10, innercounter * 10, 10, 10));
+					}
+				}
+
+				if ( bCreated )
+				{
+					graphics.Dispose();
+				}
 			}
 		}
 
@@ -148,117 +154,119 @@ namespace AGS.Plugin.FontEditor
 
 		private void PictSelectedCharacter_Click(object sender, EventArgs e)
 		{
-			MouseEventArgs mouse = (MouseEventArgs)e;
-			Graphics graphics = PictSelectedCharacter.CreateGraphics();
-
-			switch ( mouse.Button )
+			if ( Selected != null )
 			{
-			case MouseButtons.Left:
+				MouseEventArgs mouse = (MouseEventArgs)e;
+				Graphics graphics = PictSelectedCharacter.CreateGraphics();
+
+				switch ( mouse.Button )
 				{
-					SolidBrush brush = new SolidBrush(Color.White);
-					graphics.FillRectangle(brush, new Rectangle((mouse.X / 10) * 10, (mouse.Y / 10) * 10, 10, 10));
-
-					if ( ((mouse.X / 10) <= Selected.Width) || ((mouse.Y / 10) <= Selected.Height) )
+				case MouseButtons.Left:
 					{
-						BitmapData	bmpData			= Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
-						IntPtr		ptr				= bmpData.Scan0;
+						SolidBrush brush = new SolidBrush(Color.White);
+						graphics.FillRectangle(brush, new Rectangle((mouse.X / 10) * 10, (mouse.Y / 10) * 10, 10, 10));
 
-						ptr = (IntPtr)((int)ptr + bmpData.Stride * (mouse.Y / 10));
-						byte[] b = new byte[bmpData.Stride];
-						System.Runtime.InteropServices.Marshal.Copy(ptr, b, 0, bmpData.Stride);
-
-						Array.Reverse(b);
-						UInt32 line = BitConverter.ToUInt32(b, 0);
-						line |= (UInt32)(0x80000000 >> (mouse.X / 10));
-						b = BitConverter.GetBytes(line);
-						Array.Reverse(b);
-
-						System.Runtime.InteropServices.Marshal.Copy(b, 0, ptr, bmpData.Stride);
-						Selected.UnlockBits(bmpData);
-						CharacterPictures[Index].Image = Selected;
-					}
-
-					brush.Dispose();
-				}
-				break;
-			case MouseButtons.Right:
-				{
-					SolidBrush brush = new SolidBrush(Color.Black);
-					graphics.FillRectangle(brush, new Rectangle((mouse.X / 10) * 10, (mouse.Y / 10) * 10, 10, 10));
-
-					if ( ((mouse.X / 10) <= Selected.Width) || ((mouse.Y / 10) <= Selected.Height) )
-					{
-						BitmapData	bmpData			= Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
-						IntPtr		ptr				= bmpData.Scan0;
-
-						ptr = (IntPtr)((int)ptr + bmpData.Stride * (mouse.Y / 10));
-						byte[] b = new byte[bmpData.Stride];
-						System.Runtime.InteropServices.Marshal.Copy(ptr, b, 0, bmpData.Stride);
-
-						Array.Reverse(b);
-						UInt32 line = BitConverter.ToUInt32(b, 0);
-						line &= ~(UInt32)(0x80000000 >> (mouse.X / 10));
-						b = BitConverter.GetBytes(line);
-						Array.Reverse(b);
-
-						System.Runtime.InteropServices.Marshal.Copy(b, 0, ptr, bmpData.Stride);
-						Selected.UnlockBits(bmpData);
-						CharacterPictures[Index].Image = Selected;
-					}
-
-					brush.Dispose();
-				}
-				break;
-			case MouseButtons.Middle:
-				{
-					SolidBrush brush = new SolidBrush(Color.Black);
-					Bitmap bitmap = (Bitmap)PictSelectedCharacter.Image;
-					Color col =  bitmap.GetPixel(mouse.X, mouse.Y);
-
-					if ( ((mouse.X / 10) <= Selected.Width) || ((mouse.Y / 10) <= Selected.Height) )
-					{
-						BitmapData	bmpData			= Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
-						IntPtr		ptr				= bmpData.Scan0;
-
-						ptr = (IntPtr)((int)ptr + bmpData.Stride * (mouse.Y / 10));
-						byte[] b = new byte[bmpData.Stride];
-						System.Runtime.InteropServices.Marshal.Copy(ptr, b, 0, bmpData.Stride);
-
-						Array.Reverse(b);
-						UInt32 line = BitConverter.ToUInt32(b, 0);
-
-						if ( col == Color.White )
+						if ( ((mouse.X / 10) <= Selected.Width) || ((mouse.Y / 10) <= Selected.Height) )
 						{
-							brush = new SolidBrush(Color.Black);
-							line &= ~(UInt32)(0x80000000 >> (mouse.X / 10));
-						}
-						else
-						{
-							brush = new SolidBrush(Color.White);
+							BitmapData bmpData = Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
+							IntPtr ptr = bmpData.Scan0;
+
+							ptr = (IntPtr)((int)ptr + bmpData.Stride * (mouse.Y / 10));
+							byte[] b = new byte[bmpData.Stride];
+							System.Runtime.InteropServices.Marshal.Copy(ptr, b, 0, bmpData.Stride);
+
+							Array.Reverse(b);
+							UInt32 line = BitConverter.ToUInt32(b, 0);
 							line |= (UInt32)(0x80000000 >> (mouse.X / 10));
+							b = BitConverter.GetBytes(line);
+							Array.Reverse(b);
+
+							System.Runtime.InteropServices.Marshal.Copy(b, 0, ptr, bmpData.Stride);
+							Selected.UnlockBits(bmpData);
+							CharacterPictures[Index].Image = Selected;
 						}
 
-						b = BitConverter.GetBytes(line);
-						Array.Reverse(b);
-
-						System.Runtime.InteropServices.Marshal.Copy(b, 0, ptr, bmpData.Stride);
-						Selected.UnlockBits(bmpData);
-						CharacterPictures[Index].Image = Selected;
+						brush.Dispose();
 					}
+					break;
+				case MouseButtons.Right:
+					{
+						SolidBrush brush = new SolidBrush(Color.Black);
+						graphics.FillRectangle(brush, new Rectangle((mouse.X / 10) * 10, (mouse.Y / 10) * 10, 10, 10));
 
-					graphics.FillRectangle(brush, new Rectangle((mouse.X / 10) * 10, (mouse.Y / 10) * 10, 10, 10));
-					brush.Dispose();
-				}
-				break;
-			};
+						if ( ((mouse.X / 10) <= Selected.Width) || ((mouse.Y / 10) <= Selected.Height) )
+						{
+							BitmapData bmpData = Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
+							IntPtr ptr = bmpData.Scan0;
 
-			CFontUtils.SaveByteLinesFromPicture(SelectedFont.Character[Index], Selected);
+							ptr = (IntPtr)((int)ptr + bmpData.Stride * (mouse.Y / 10));
+							byte[] b = new byte[bmpData.Stride];
+							System.Runtime.InteropServices.Marshal.Copy(ptr, b, 0, bmpData.Stride);
+
+							Array.Reverse(b);
+							UInt32 line = BitConverter.ToUInt32(b, 0);
+							line &= ~(UInt32)(0x80000000 >> (mouse.X / 10));
+							b = BitConverter.GetBytes(line);
+							Array.Reverse(b);
+
+							System.Runtime.InteropServices.Marshal.Copy(b, 0, ptr, bmpData.Stride);
+							Selected.UnlockBits(bmpData);
+							CharacterPictures[Index].Image = Selected;
+						}
+
+						brush.Dispose();
+					}
+					break;
+				case MouseButtons.Middle:
+					{
+						SolidBrush brush = new SolidBrush(Color.Black);
+						Bitmap bitmap = (Bitmap)PictSelectedCharacter.Image;
+						Color col = bitmap.GetPixel(mouse.X, mouse.Y);
+
+						if ( ((mouse.X / 10) <= Selected.Width) || ((mouse.Y / 10) <= Selected.Height) )
+						{
+							BitmapData bmpData = Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
+							IntPtr ptr = bmpData.Scan0;
+
+							ptr = (IntPtr)((int)ptr + bmpData.Stride * (mouse.Y / 10));
+							byte[] b = new byte[bmpData.Stride];
+							System.Runtime.InteropServices.Marshal.Copy(ptr, b, 0, bmpData.Stride);
+
+							Array.Reverse(b);
+							UInt32 line = BitConverter.ToUInt32(b, 0);
+
+							if ( col == Color.White )
+							{
+								brush = new SolidBrush(Color.Black);
+								line &= ~(UInt32)(0x80000000 >> (mouse.X / 10));
+							}
+							else
+							{
+								brush = new SolidBrush(Color.White);
+								line |= (UInt32)(0x80000000 >> (mouse.X / 10));
+							}
+
+							b = BitConverter.GetBytes(line);
+							Array.Reverse(b);
+
+							System.Runtime.InteropServices.Marshal.Copy(b, 0, ptr, bmpData.Stride);
+							Selected.UnlockBits(bmpData);
+							CharacterPictures[Index].Image = Selected;
+						}
+
+						graphics.FillRectangle(brush, new Rectangle((mouse.X / 10) * 10, (mouse.Y / 10) * 10, 10, 10));
+						brush.Dispose();
+					}
+					break;
+				};
+
+				CFontUtils.SaveByteLinesFromPicture(SelectedFont.Character[Index], Selected);
+			}
 		}
 		private void PictSelectedCharacter_MouseDown(object sender, MouseEventArgs e)
 		{
 			bInEdit = true;
 		}
-
 		private void PictSelectedCharacter_MouseMove(object sender, MouseEventArgs e)
 		{
 			if ( bInEdit )
@@ -272,7 +280,6 @@ namespace AGS.Plugin.FontEditor
 				}
 			}
 		}
-
 		private void PictSelectedCharacter_MouseUp(object sender, MouseEventArgs e)
 		{
 			bInEdit = false;
@@ -282,30 +289,34 @@ namespace AGS.Plugin.FontEditor
 		{
 			PictureBox pict = (PictureBox)sender;
 			Bitmap bitmap = (Bitmap)pict.Image;
-			Selected = (Bitmap)pict.Image;
-
-			/* This is for the first upper-left point in the Image. 
-			 * So you can Draw over it in the other color from the start. */
-			EditPoint.X = -1;
-			EditPoint.Y = -1;
 			
-			uint i=0;
-			foreach ( PictureBox item in CharacterPictures )
+			if ( bitmap != null )
 			{
-				if ( item == pict )
+				Selected = (Bitmap)pict.Image;
+
+				/* This is for the first upper-left point in the Image. 
+				 * So you can Draw over it in the other color from the start. */
+				EditPoint.X = -1;
+				EditPoint.Y = -1;
+
+				uint i = 0;
+				foreach ( PictureBox item in CharacterPictures )
 				{
-					break;
+					if ( item == pict )
+					{
+						break;
+					}
+					i++;
 				}
-				i++;
+				Index = i;
+
+				PaintCharacter(Selected, null);
+
+				ClickedOnCharacter = true;
+				numWidth.Value = ((CFontInfo)FontView.SelectedNode.Tag).Character[Index].Width;
+				numHeight.Value = ((CFontInfo)FontView.SelectedNode.Tag).Character[Index].Height;
+				ClickedOnCharacter = false;
 			}
-			Index = i;
-
-			PaintCharacter(Selected, null);
-
-			ClickedOnCharacter = true;
-			numWidth.Value		= ((CFontInfo)FontView.SelectedNode.Tag).Character[Index].Width;
-			numHeight.Value		= ((CFontInfo)FontView.SelectedNode.Tag).Character[Index].Height;
-			ClickedOnCharacter = false;
 		}
 		private void BtnSave_Click(object sender, EventArgs e)
 		{

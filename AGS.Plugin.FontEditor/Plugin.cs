@@ -15,6 +15,8 @@ namespace AGS.Plugin.FontEditor
 		private ContentDocument _pane;
 		private FontEditor LocalFontEditor;
 
+		private Dictionary<string, ContentDocument> PaneDictionary = new Dictionary<string, ContentDocument>();
+
 		public Component(IAGSEditor editor)
 		{
 			_editor = editor;
@@ -22,6 +24,7 @@ namespace AGS.Plugin.FontEditor
 			_editor.GUIController.ProjectTree.AddTreeRoot(this, CONTROL_ID_ROOT_NODE, "FontEditor", "FontEditorIcon");
 
 			LocalFontEditor = new FontEditor(editor);
+
 			_pane = new ContentDocument(LocalFontEditor, "FontEditor", this);
 		}
 		string IEditorComponent.ComponentID
@@ -47,7 +50,15 @@ namespace AGS.Plugin.FontEditor
 			}
 			else if ( controlID == CONTROL_ID_ROOT_NODE )
 			{
-				_editor.GUIController.AddOrShowPane(_pane);
+				//_editor.GUIController.AddOrShowPane(_pane);
+			}
+			else if ( controlID.Contains(CONTROL_ID_ROOT_NODE) )
+			{
+				ContentDocument editpane;
+				if ( PaneDictionary.TryGetValue(controlID, out editpane) )
+				{
+					_editor.GUIController.AddOrShowPane(editpane);
+				}
 			}
 		}
 
@@ -57,6 +68,11 @@ namespace AGS.Plugin.FontEditor
 
 		void IEditorComponent.BeforeSaveGame()
 		{
+			foreach ( ContentDocument item in PaneDictionary.Values )
+			{
+				FontEditorPane pane = (FontEditorPane)item.Control;
+				pane.Save();
+			}
 		}
 		void IEditorComponent.RefreshDataFromGame()
 		{
@@ -65,13 +81,27 @@ namespace AGS.Plugin.FontEditor
 
 			if ( _editor.CurrentGame.Fonts.Count > 0 )
 			{
+				int i = 0;
 				LocalFontEditor.FontList.Clear();
 				LocalFontEditor.FontView.Nodes.Clear();
+				_editor.GUIController.ProjectTree.RemoveAllChildNodes(this, CONTROL_ID_ROOT_NODE);
+
+				/// Sets the project tree's internal marker to the specified node.
+				/// Any AddTreeLeaf commands will add them as children of this node.
+				/// </summary>
+				_editor.GUIController.ProjectTree.StartFromNode(this, CONTROL_ID_ROOT_NODE);
 
 				foreach ( AGS.Types.Font font in _editor.CurrentGame.Fonts )
 				{
-					LocalFontEditor.AddFontToList(_editor.CurrentGame.DirectoryPath, font.WFNFileName, font.Name);
+					if ( LocalFontEditor.AddFontToList(_editor.CurrentGame.DirectoryPath, font.WFNFileName, font.Name) )
+					{
+						PaneDictionary.Add(CONTROL_ID_ROOT_NODE + i.ToString(), new ContentDocument(new FontEditorPane(_editor.CurrentGame.DirectoryPath, font.WFNFileName, font.Name), "FontEditor: " + font.Name, this));
+
+					    _editor.GUIController.ProjectTree.AddTreeLeaf(this, CONTROL_ID_ROOT_NODE+i.ToString(), font.Name, "FontEditorIcon", false);
+					    i++;
+					}
 				}
+				
 			}
 		}
 		void IEditorComponent.GameSettingsChanged()

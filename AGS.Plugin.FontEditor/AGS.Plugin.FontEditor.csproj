@@ -72,6 +72,12 @@
     <Compile Include="FontEditor.Designer.cs">
       <DependentUpon>FontEditor.cs</DependentUpon>
     </Compile>
+    <Compile Include="FontEditorPane.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="FontEditorPane.Designer.cs">
+      <DependentUpon>FontEditorPane.cs</DependentUpon>
+    </Compile>
     <Compile Include="FontInfo.cs" />
     <Compile Include="indexed_copy.cs" />
     <Compile Include="Plugin.cs" />
@@ -90,6 +96,9 @@
   <ItemGroup>
     <EmbeddedResource Include="FontEditor.resx">
       <DependentUpon>FontEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FontEditorPane.resx">
+      <DependentUpon>FontEditorPane.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
