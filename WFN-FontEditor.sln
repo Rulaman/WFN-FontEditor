@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WFN-FontEditor", "WFN-FontEditor\WFN-FontEditor.csproj", "{8736BCC0-6A3C-4334-A3E8-23FF4EF49B63}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AGS.Plugin.FontEditor", "AGS.Plugin.FontEditor\AGS.Plugin.FontEditor.csproj", "{0BE215B5-F4A4-43DF-92F8-FB9CDE4728E8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8736BCC0-6A3C-4334-A3E8-23FF4EF49B63}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8736BCC0-6A3C-4334-A3E8-23FF4EF49B63}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8736BCC0-6A3C-4334-A3E8-23FF4EF49B63}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8736BCC0-6A3C-4334-A3E8-23FF4EF49B63}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BE215B5-F4A4-43DF-92F8-FB9CDE4728E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BE215B5-F4A4-43DF-92F8-FB9CDE4728E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BE215B5-F4A4-43DF-92F8-FB9CDE4728E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BE215B5-F4A4-43DF-92F8-FB9CDE4728E8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(MercurialSourceControlSolutionProperties) = preSolution
+		SolutionIsControlled = True
+		SolutionBindings = <Solution Location In Database>
+	EndGlobalSection
+EndGlobal
