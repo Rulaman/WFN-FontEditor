@@ -9,7 +9,7 @@ namespace AGS.Plugin.FontEditor
 		private const string						COMPONENT_MENU_COMMAND	= "WFN-FontEditorMenuCommand";
 		private const string						CONTROL_ID_ROOT_NODE	= "FontEditorRoot";
 		private IAGSEditor							LocalEditor;
-		private ContentDocument						Pane;
+		//private ContentDocument						Pane;
 		private Dictionary<int, FontPane>			FontPaneList			= new Dictionary<int, FontPane>();
 		private Dictionary<int, ContentDocument>	PaneDictionary			= new Dictionary<int, ContentDocument>();
 		private MenuCommand							MenuCommand;
@@ -102,7 +102,7 @@ namespace AGS.Plugin.FontEditor
 		}
 		void IEditorComponent.RefreshDataFromGame()
 		{
-			LocalEditor.GUIController.RemovePaneIfExists(Pane);
+			//LocalEditor.GUIController.RemovePaneIfExists(Pane);
 
 			if ( LocalEditor.CurrentGame.Fonts.Count > 0 )
 			{

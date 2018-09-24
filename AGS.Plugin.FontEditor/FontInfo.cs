@@ -351,61 +351,42 @@ namespace AGS.Plugin.FontEditor
 		}
 		public static void CreateBitmap(CCharInfo character, out Bitmap bmp)
 		{
-			bmp = new System.Drawing.Bitmap(character.Width, character.Height, System.Drawing.Imaging.PixelFormat.Format1bppIndexed);
-			BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.ReadWrite, bmp.PixelFormat);
-			IntPtr ptr = bmpData.Scan0;
-			int len = bmpData.Width;
-			Int32 bytesPerLine = 0;
-			Int32 startPos = character.ByteLines.Length / bmpData.Height;
-
-			if ( bmpData.Width <= 8 )
+			if ( character.Width == 0 || character.Height == 0 )
 			{
-				bytesPerLine = 1;
-			}
-			else if ( bmpData.Width <= 16 )
-			{
-				bytesPerLine = 2;
-			}
-			else if ( bmpData.Width <= 32 )
-			{
-				bytesPerLine = 3;
-			}
-
-			if ( character.ByteLines.Length == 0 )
-			{
+				bmp = new System.Drawing.Bitmap(4, 4, System.Drawing.Imaging.PixelFormat.Format1bppIndexed);
 			}
 			else
 			{
-				for ( int heightcounter = 0; heightcounter < bmp.Height; heightcounter++ )
-				{
-					System.Runtime.InteropServices.Marshal.Copy(character.ByteLines, startPos * heightcounter, ptr, bytesPerLine);
-					ptr = (IntPtr)((int)ptr + bmpData.Stride);
-				}
-			}
+				bmp = new System.Drawing.Bitmap(character.Width, character.Height, System.Drawing.Imaging.PixelFormat.Format1bppIndexed);
+				BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.ReadWrite, bmp.PixelFormat);
+				IntPtr ptr = bmpData.Scan0;
+				int len = bmpData.Width;
+				Int32 bytesPerLine = (bmpData.Width - 1) / 8 + 1;
+				Int32 startPos = character.ByteLines.Length / bmpData.Height;
 
-			bmp.UnlockBits(bmpData);
+				if ( character.ByteLines.Length == 0 )
+				{
+				}
+				else
+				{
+					for ( int heightcounter = 0; heightcounter < bmp.Height; heightcounter++ )
+					{
+						System.Runtime.InteropServices.Marshal.Copy(character.ByteLines, startPos * heightcounter, ptr, bytesPerLine);
+						ptr = (IntPtr)((int)ptr + bmpData.Stride);
+					}
+				}
+
+				bmp.UnlockBits(bmpData);
+			}
 		}
 		public static void SaveByteLinesFromPicture(CCharInfo character, Bitmap bmp)
 		{
 			BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.ReadWrite, bmp.PixelFormat);
 			IntPtr ptr = bmpData.Scan0;
 			int len = bmpData.Width;
-			Int32 bytesPerLine = 0;
+			Int32 bytesPerLine = (bmpData.Width - 1) / 8 + 1;
 			Int32 startPos = character.ByteLines.Length / bmpData.Height;
-
-			if ( bmpData.Width <= 8 )
-			{
-				bytesPerLine = 1;
-			}
-			else if ( bmpData.Width <= 16 )
-			{
-				bytesPerLine = 2;
-			}
-			else if ( bmpData.Width <= 32 )
-			{
-				bytesPerLine = 3;
-			}
-
+		
 			character.ByteLines = new byte[bmp.Height * bytesPerLine];
 			for ( int heightcounter = 0; heightcounter < bmp.Height; heightcounter++ )
 			{

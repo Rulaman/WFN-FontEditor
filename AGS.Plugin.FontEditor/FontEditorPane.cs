@@ -24,6 +24,7 @@ namespace AGS.Plugin.FontEditor
 		private bool ClickedOnCharacter = false;
 		private bool FontModifiedSaved = false;
 		private bool ShowGrid = false;
+		private bool GridFix = false;
 		private Point Grid = new Point(-1, -1);
 		private Pen GridPen = new Pen(Color.FromArgb(255, 64, 64, 64)); // darker gray
 
@@ -35,6 +36,11 @@ namespace AGS.Plugin.FontEditor
 			ChangeWidth,
 			ChangeHeight,
 			ChangeBoth,
+		}
+		private enum EDirection
+		{
+			Next,
+			Prev,
 		}
 
 		static bool ArraysEqual(byte[] a1, byte[] a2)
@@ -155,6 +161,8 @@ namespace AGS.Plugin.FontEditor
 					AddCharacterToList(item);
 				}
 
+				SetGridFix();
+
 				if ( FontInfo.Character.Length == 256 )
 				{
 					BtnExtend256.Enabled = false;
@@ -163,6 +171,7 @@ namespace AGS.Plugin.FontEditor
 
 			FlowCharacterPanel.BackColor = XmlSettings.Color;
 			ChkGrid.Checked = XmlSettings.Grid;
+			ChkGridFix.Checked = XmlSettings.GridFix;
 			ShowCharacterCount();
 		}
 
@@ -234,11 +243,13 @@ namespace AGS.Plugin.FontEditor
 					FontInfo.Character[counter + len].WidthOriginal = 4;
 					FontInfo.Character[counter + len].Index = counter + len;
 
-					FontInfo.Character[counter + len].ByteLines = new byte[2];
-					FontInfo.Character[counter + len].ByteLinesOriginal = new byte[2];
+					FontInfo.Character[counter + len].ByteLines = new byte[4];
+					FontInfo.Character[counter + len].ByteLinesOriginal = new byte[4];
 
 					AddCharacterToList(FontInfo.Character[counter+len]);
 				}
+
+				SetGridFix();
 
 				BtnExtend256.Enabled = false;
 				ShowCharacterCount();
@@ -493,6 +504,33 @@ namespace AGS.Plugin.FontEditor
 			}
 		}
 
+		void PrevNext(EDirection direction)
+		{
+			switch ( direction )
+			{
+			case EDirection.Next:
+				{
+					Index++;
+				}
+				break;
+			case EDirection.Prev:
+				{
+					Index--;
+				}
+				break;
+			};
+
+			foreach ( PictureBox item in CharacterPictureList )
+			{
+				CCharInfo characterinfo = (CCharInfo)(item.Tag);
+
+				if ( characterinfo.Index == Index)
+				{
+					DisplayCurrentCharacter(characterinfo);
+				}
+			}
+		}
+
 		void Character_Click(object sender, EventArgs e)
 		{
 			MouseEventArgs mouse = (MouseEventArgs)e;
@@ -504,43 +542,7 @@ namespace AGS.Plugin.FontEditor
 			{
 			case MouseButtons.Left:
 				{
-					Bitmap bitmap = (Bitmap)characterinfo.UnscaledImage;
-
-					Index = characterinfo.Index;
-
-					ClickedOnCharacter = true;
-					numWidth.Value = characterinfo.Width;
-					numHeight.Value = characterinfo.Height;
-					ClickedOnCharacter = false;
-
-					Bitmap scaledbitmap;
-					CFontUtils.ScaleBitmap(bitmap, out scaledbitmap, ZoomDrawingArea.Value);
-					DrawingArea.Size = scaledbitmap.Size;
-#if XY
-					DrawingArea.Image = scaledbitmap;
-#else				
-					Graphics graphics = DrawingArea.CreateGraphics();
-					graphics.DrawImage(scaledbitmap, 0, 0);
-					
-					if ( ShowGrid )
-					{
-					    Int32 zoom = ZoomDrawingArea.Value;
-
-					    for ( int xcnt = 0; xcnt < characterinfo.Width; xcnt++ )
-					    {
-					        for ( int ycnt = 0; ycnt < characterinfo.Height; ycnt++ )
-					        {
-					            graphics.DrawRectangle(GridPen, xcnt * zoom, ycnt * zoom, zoom, zoom);
-					        }
-					    }
-					}
-					
-					graphics.Dispose();
-#endif
-					
-					
-
-					PaintOnDrawingArea(DrawingArea, null);
+					DisplayCurrentCharacter(characterinfo);
 				}
 				break;
 			case MouseButtons.Right:
@@ -550,6 +552,45 @@ namespace AGS.Plugin.FontEditor
 				}
 				break;
 			};
+		}
+
+		private void DisplayCurrentCharacter(CCharInfo characterinfo)
+		{
+			Bitmap bitmap = (Bitmap)characterinfo.UnscaledImage;
+
+			Index = characterinfo.Index;
+
+			LblCharacter.Text = Convert.ToString(Index) + "   " + "0x" + Convert.ToString(Index, 16) + "   " + Chr(Index); // decimal, hex, ascii
+			TxtCharacter.Text = Convert.ToString(Index);
+
+			ClickedOnCharacter = true;
+			numWidth.Value = characterinfo.Width;
+			numHeight.Value = characterinfo.Height;
+			ClickedOnCharacter = false;
+
+			Bitmap scaledbitmap;
+			CFontUtils.ScaleBitmap(bitmap, out scaledbitmap, ZoomDrawingArea.Value);
+			DrawingArea.Size = scaledbitmap.Size;
+
+			Graphics graphics = DrawingArea.CreateGraphics();
+			graphics.DrawImage(scaledbitmap, 0, 0);
+
+			if ( ShowGrid )
+			{
+				Int32 zoom = ZoomDrawingArea.Value;
+
+				for ( int xcnt = 0; xcnt < characterinfo.Width; xcnt++ )
+				{
+					for ( int ycnt = 0; ycnt < characterinfo.Height; ycnt++ )
+					{
+						graphics.DrawRectangle(GridPen, xcnt * zoom, ycnt * zoom, zoom, zoom);
+					}
+				}
+			}
+
+			graphics.Dispose();
+
+			PaintOnDrawingArea(DrawingArea, null);
 		}
 
 		private void ZoomDrawingArea_ValueChanged(object sender, EventArgs e)
@@ -675,22 +716,6 @@ namespace AGS.Plugin.FontEditor
 					PaintOnDrawingArea(sender, e);
 				}
 			}
-
-			//if ( (Grid.X != (e.X / zoom)) || (Grid.Y != (e.Y / zoom)) )
-			//{
-			//    Grid.X = (e.X / zoom);
-			//    Grid.Y = (e.Y / zoom);
-
-			//    if ( ((e.X / zoom) - EditPoint.X != 0) || ((e.Y / zoom) - EditPoint.Y != 0) )
-			//    {
-			//        /* show the rectangle */
-			//        //DrawingArea.Invalidate();
-			//        //PaintOnDrawingArea(sender, e);
-			//        Graphics graphics = ((PictureBox)sender).CreateGraphics();
-			//        graphics.DrawRectangle(pen, (e.X / zoom) * zoom, (e.Y / zoom) * zoom, zoom, zoom);
-			//		  graphics.Dispose();
-			//    }
-			//}
 		}
 		private void DrawingArea_MouseUp(object sender, MouseEventArgs e)
 		{
@@ -733,6 +758,40 @@ namespace AGS.Plugin.FontEditor
 			}
 		}
 
+		private void SetGridFix()
+		{
+			FlowCharacterPanel.SuspendLayout();
+
+			try
+			{
+				if ( GridFix )
+				{
+					int maxwidth = 0;
+
+					foreach ( PictureBox item in CharacterPictureList )
+					{
+						maxwidth = Math.Max(item.Width, maxwidth);
+					}
+
+					foreach ( PictureBox item in CharacterPictureList )
+					{
+						item.Margin = new Padding(3, 3, maxwidth + 3 - item.Width, 3);
+					}
+				}
+				else
+				{
+					foreach ( PictureBox item in CharacterPictureList )
+					{
+						item.Margin = new Padding(3, 3, 3, 3);
+					}
+				}
+			}
+			finally
+			{
+				FlowCharacterPanel.ResumeLayout();
+			}
+		}
+
 		public void Save()
 		{
 			CFontUtils.SaveOneFont(FontInfo);
@@ -746,6 +805,8 @@ namespace AGS.Plugin.FontEditor
 				CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
 				CreateAndShow(character, SizeMode.ChangeBoth);
 			}
+
+			SetGridFix();
 			CheckChange();
 		}
 
@@ -821,6 +882,96 @@ namespace AGS.Plugin.FontEditor
 			AdjustSize();
 		}
 
+		private void ChkGrid_CheckedChanged(object sender, EventArgs e)
+		{
+			ShowGrid = ChkGrid.Checked;
+			Character_Click(CharacterPictureList[Index], new MouseEventArgs(MouseButtons.Left, 1, 0, 0, 0));
+			XmlSettings.Grid = ShowGrid;
+			XmlSettings.Write();
+		}
+		private void ChkGridFix_CheckedChanged(object sender, EventArgs e)
+		{
+			GridFix = ChkGridFix.Checked;
+
+			SetGridFix();
+
+			XmlSettings.GridFix = GridFix;
+			XmlSettings.Write();
+		}
+
+		private Image RenderTextLine(string text)
+		{
+			Int32 xpos = 0;
+			Int32 widthpreliminary = 0;
+			Int32 heightpreliminary = 0;
+			Image bmp;
+
+			try
+			{
+				foreach ( char c in text )
+				{
+					widthpreliminary += FontInfo.Character[c].Width;
+					heightpreliminary = Math.Max(heightpreliminary, FontInfo.Character[c].Height);
+				}
+
+				bmp = new Bitmap(widthpreliminary + 4, heightpreliminary + 4);
+				Graphics g = Graphics.FromImage(bmp);
+
+				g.FillRectangle(new SolidBrush(Color.Gray), 0, 0, bmp.Width, bmp.Height);
+
+				foreach ( char c in text )
+				{
+					g.DrawImageUnscaled(FontInfo.Character[c].UnscaledImage, xpos + 2, 2);
+					xpos += FontInfo.Character[c].Width;
+				}
+
+				g.Dispose();
+			}
+			catch
+			{
+				bmp = new Bitmap(600, 20);
+				Graphics g = Graphics.FromImage(bmp);
+				g.DrawString("No rendering possible. Not enough characters in the font, or another problem!", new System.Drawing.Font("Arial", 12), new SolidBrush(Color.Black), 2, 2);
+				g.Dispose();
+			}
+
+			return bmp;
+		}
+
+		private void FlowCharacterPanel_Click(object sender, EventArgs e)
+		{
+			MouseEventArgs events = (MouseEventArgs)e;
+
+			switch ( events.Button )
+			{
+			case MouseButtons.Right:
+				{
+					ColorDialog cd = new ColorDialog();
+
+					cd.Color = FlowCharacterPanel.BackColor;
+
+					if ( cd.ShowDialog() == DialogResult.OK )
+					{
+						FlowCharacterPanel.BackColor = cd.Color;
+					}
+
+					XmlSettings.Color = cd.Color;
+					XmlSettings.Write();
+				}
+				break;
+			default:
+				{
+				}
+				break;
+			};
+		}
+		private void PictSwap_Click(object sender, EventArgs e)
+		{
+			Color temp = PanelRightMouse.BackColor;
+			PanelRightMouse.BackColor = PanelLeftMouse.BackColor;
+			PanelLeftMouse.BackColor = temp;
+		}
+
 		private void BtnClear_Click(object sender, EventArgs e)
 		{
 			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
@@ -857,7 +1008,6 @@ namespace AGS.Plugin.FontEditor
 			CreateAndShow(character, SizeMode.ChangeNothing);
 			CheckChange();
 		}
-
 		private void BtnShiftUp_Click(object sender, EventArgs e)
 		{
 			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
@@ -1020,29 +1170,6 @@ namespace AGS.Plugin.FontEditor
 			CreateAndShow(character, SizeMode.ChangeNothing);
 			CheckChange();
 		}
-
-		//private void BtnSetAllHeight_Click(object sender, EventArgs e)
-		//{
-		//    foreach ( PictureBox item in CharacterPictureList )
-		//    {
-		//        if ( !ClickedOnCharacter )
-		//        {
-		//            CCharInfo character = ((CCharInfo)(item.Tag));
-		//            CreateAndShow(character, SizeMode.ChangeHeight);
-		//        }
-		//    }
-
-		//    CheckChange();
-		//}
-
-		private void ChkGrid_CheckedChanged(object sender, EventArgs e)
-		{
-			ShowGrid = ChkGrid.Checked;
-			Character_Click(CharacterPictureList[Index], new MouseEventArgs(MouseButtons.Left, 1, 0, 0, 0));
-			XmlSettings.Grid = ShowGrid;
-			XmlSettings.Write();
-		}
-
 		private void BtnInvert_Click(object sender, EventArgs e)
 		{
 			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
@@ -1091,14 +1218,6 @@ namespace AGS.Plugin.FontEditor
 			CreateAndShow(character, SizeMode.ChangeNothing);
 			CheckChange();
 		}
-
-		private void PictSwap_Click(object sender, EventArgs e)
-		{
-			Color temp = PanelRightMouse.BackColor;
-			PanelRightMouse.BackColor = PanelLeftMouse.BackColor;
-			PanelLeftMouse.BackColor = temp;
-		}
-
 		private void BtnSwapHorizontally_Click(object sender, EventArgs e)
 		{
 			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
@@ -1162,13 +1281,10 @@ namespace AGS.Plugin.FontEditor
 
 					UInt32 temp = 0;
 					UInt32 temp2 = 0;
-					//UInt32 temp3 = 0;
 
 					for(int cnti=0;cnti<32;cnti++)
 					{
 						temp2 = line >> (32-(cnti+1));
-						//temp3 = (UInt32)(1 << (cnti+1));
-
 						temp |= (temp2&1) << cnti;
 					}
 					
@@ -1197,13 +1313,10 @@ namespace AGS.Plugin.FontEditor
 			CreateAndShow(character, SizeMode.ChangeNothing);
 			CheckChange();
 		}
-
 		private void BtnOutline_Click(object sender, EventArgs e)
 		{
 			OutlineCharacter(Index);
 		}
-
-		
 		private void BtnOutlineFont_Click(object sender, EventArgs e)
 		{
 			for ( Int32 counter = 0; counter < CharacterPictureList.Count; counter++ )
@@ -1211,79 +1324,10 @@ namespace AGS.Plugin.FontEditor
 				OutlineCharacter(counter);
 			}
 		}
-
-		private void FlowCharacterPanel_Click(object sender, EventArgs e)
-		{
-			MouseEventArgs events = (MouseEventArgs)e;
-
-			switch ( events.Button )
-			{
-			case MouseButtons.Right:
-				{
-					ColorDialog cd = new ColorDialog();
-
-					cd.Color = FlowCharacterPanel.BackColor;
-
-					if ( cd.ShowDialog() == DialogResult.OK )
-					{
-						FlowCharacterPanel.BackColor = cd.Color;
-					}
-
-					XmlSettings.Color = cd.Color;
-					XmlSettings.Write();
-				}
-				break;
-			default:
-				{
-				}
-				break;
-			};
-		}
-
-		private Image RenderTextLine(string text)
-		{
-			Int32 xpos = 0;
-			Int32 widthpreliminary = 0;
-			Int32 heightpreliminary = 0;
-			Image bmp;
-
-			try
-			{
-				foreach ( char c in text )
-				{
-					widthpreliminary += FontInfo.Character[c].Width;
-					heightpreliminary = Math.Max(heightpreliminary, FontInfo.Character[c].Height);
-				}
-
-				bmp = new Bitmap(widthpreliminary + 4, heightpreliminary + 4);
-				Graphics g = Graphics.FromImage(bmp);
-
-				g.FillRectangle(new SolidBrush(Color.Gray), 0, 0, bmp.Width, bmp.Height);
-
-				foreach ( char c in text )
-				{
-					g.DrawImageUnscaled(FontInfo.Character[c].UnscaledImage, xpos + 2, 2);
-					xpos += FontInfo.Character[c].Width;
-				}
-
-				g.Dispose();
-			}
-			catch
-			{
-				bmp = new Bitmap(600, 20);
-				Graphics g = Graphics.FromImage(bmp);
-				g.DrawString("No rendering possible. Not enough characters in the font, or another problem!", new System.Drawing.Font("Arial", 12), new SolidBrush(Color.Black), 2, 2);
-				g.Dispose();
-			}
-
-			return bmp;
-		}
-
 		private void BtnRenderText_Click(object sender, EventArgs e)
 		{
 			PictRenderText.Image = RenderTextLine(XmlSettings.CustomText);
 		}
-
 		private void BtnSetText_Click(object sender, EventArgs e)
 		{
 			string newValue = "";
@@ -1296,6 +1340,102 @@ namespace AGS.Plugin.FontEditor
 			}
 
 			XmlSettings.Write();
+		}
+		private void BtnPrevious_Click(object sender, EventArgs e)
+		{
+			if ( Index > 0 )
+			{
+				PrevNext(EDirection.Prev);
+			}
+		}
+		private void BtnNext_Click(object sender, EventArgs e)
+		{
+			if ( Index < (CharacterPictureList.Count - 1) )
+			{
+				PrevNext(EDirection.Next);
+			}
+		}
+		private void BtnAllHeight_Click(object sender, EventArgs e)
+		{
+			foreach ( PictureBox item in CharacterPictureList )
+			{
+				if ( !ClickedOnCharacter )
+				{
+					CCharInfo character = ((CCharInfo)(item.Tag));
+					CreateAndShow(character, SizeMode.ChangeHeight);
+				}
+			}
+
+			CheckChange();
+		}
+		private void BtnAllWidth_Click(object sender, EventArgs e)
+		{
+			foreach ( PictureBox item in CharacterPictureList )
+			{
+				if ( !ClickedOnCharacter )
+				{
+					CCharInfo character = ((CCharInfo)(item.Tag));
+					CreateAndShow(character, SizeMode.ChangeWidth);
+				}
+			}
+
+			CheckChange();
+		}
+
+		private UInt32? ParseXmlNumber(string s)
+		{
+			UInt32? number;
+
+			if ( s.ToLower().StartsWith("0x") )
+			{
+				number = UInt32.Parse(s.Substring(2), System.Globalization.NumberStyles.HexNumber);
+			}
+			else if ( s.ToLower().EndsWith("h") )
+			{
+				number = UInt32.Parse(s.TrimEnd('h'), System.Globalization.NumberStyles.HexNumber);
+			}
+			else
+			{
+				number = UInt32.Parse(s, System.Globalization.NumberStyles.Integer);
+			}
+
+			return number;
+		}
+
+		private void TxtCharacter_KeyPress(object sender, KeyPressEventArgs e)
+		{
+			if ( e.KeyChar == '\r' )
+			{
+				UInt32? number = 0;
+
+				try
+				{
+					number = ParseXmlNumber(TxtCharacter.Text);
+				}
+				catch
+				{
+				}
+				finally
+				{
+					if ( number != null )
+					{
+						if ( number > 0 && number < FontInfo.Character.Length )
+						{
+							Index = (int)number;
+
+							foreach ( PictureBox item in CharacterPictureList )
+							{
+								CCharInfo characterinfo = (CCharInfo)(item.Tag);
+
+								if ( characterinfo.Index == Index )
+								{
+									DisplayCurrentCharacter(characterinfo);
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 }

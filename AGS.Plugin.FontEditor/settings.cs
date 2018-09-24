@@ -13,12 +13,13 @@ namespace AGS.Plugin.FontEditor
 	{
 		public Color Color;
 		public bool Grid;
+		public bool GridFix;
 		public string CustomText;
 		
 		private XmlDocument doc = new XmlDocument();
 		private string Filename = @"WFN-FontEditor.xml";
 		private string PartOne = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<?xml-stylesheet type=\"text/xsl\" href=\"xsl/installation.xsl\"?>\r\n<FontEditor><Color>-12566464</Color><Text>";
-		private string PartTwo = "</Text><Grid>false</Grid></FontEditor>";
+		private string PartTwo = "</Text><Grid>false</Grid><GridFix>false</GridFix></FontEditor>";
 		private string PartComplete = "";
 
 		private bool CreateFile(string filename)
@@ -58,6 +59,9 @@ namespace AGS.Plugin.FontEditor
 			try { Grid = bool.Parse(((XmlNode)doc.SelectSingleNode("FontEditor/Grid")).InnerText); }
 			catch { Grid = false; }
 
+			try { GridFix = bool.Parse(((XmlNode)doc.SelectSingleNode("FontEditor/GridFix")).InnerText); }
+			catch { GridFix = false; }
+
 			try { CustomText = ((XmlNode)doc.SelectSingleNode("FontEditor/Text")).InnerText; }
 			catch { CustomText = ""; }
 
@@ -77,9 +81,18 @@ namespace AGS.Plugin.FontEditor
 		{
 			if ( doc != null )
 			{
-				((XmlNode)doc.SelectSingleNode("FontEditor/Grid")).InnerText = Grid.ToString();
-				((XmlNode)doc.SelectSingleNode("FontEditor/Text")).InnerText = CustomText;
-				((XmlNode)doc.SelectSingleNode("FontEditor/Color")).InnerText = Color.ToArgb().ToString();
+				try { ((XmlNode)doc.SelectSingleNode("FontEditor/Grid")).InnerText = Grid.ToString(); }
+				catch { ((XmlNode)doc.CreateElement("Grid")).InnerText = Grid.ToString(); }
+				
+				try { ((XmlNode)doc.SelectSingleNode("FontEditor/GridFix")).InnerText = GridFix.ToString(); }
+				catch { ((XmlNode)doc.CreateElement("GridFix")).InnerText = GridFix.ToString(); }
+				
+				try { ((XmlNode)doc.SelectSingleNode("FontEditor/Text")).InnerText = CustomText;}
+				catch { ((XmlNode)doc.CreateElement("Text")).InnerText = CustomText; }
+
+				try { ((XmlNode)doc.SelectSingleNode("FontEditor/Color")).InnerText = Color.ToArgb().ToString(); }
+				catch { ((XmlNode)doc.CreateElement("Color")).InnerText = Color.ToArgb().ToString(); }
+
 				doc.Save(Filename);
 			}
 			return true;

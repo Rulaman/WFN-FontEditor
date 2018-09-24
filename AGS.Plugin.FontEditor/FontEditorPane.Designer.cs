@@ -60,6 +60,13 @@
 			this.BtnRenderText = new System.Windows.Forms.Button();
 			this.PictRenderText = new System.Windows.Forms.PictureBox();
 			this.BtnSetText = new System.Windows.Forms.Button();
+			this.LblCharacter = new System.Windows.Forms.Label();
+			this.BtnPrevious = new System.Windows.Forms.Button();
+			this.BtnNext = new System.Windows.Forms.Button();
+			this.ChkGridFix = new System.Windows.Forms.CheckBox();
+			this.BtnAllHeight = new System.Windows.Forms.Button();
+			this.BtnAllWidth = new System.Windows.Forms.Button();
+			this.TxtCharacter = new System.Windows.Forms.TextBox();
 			this.GroupBox.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.ZoomDrawingArea)).BeginInit();
 			this.PanelSize.SuspendLayout();
@@ -110,7 +117,7 @@
 			// ZoomDrawingArea
 			// 
 			this.ZoomDrawingArea.LargeChange = 1;
-			this.ZoomDrawingArea.Location = new System.Drawing.Point(335, 135);
+			this.ZoomDrawingArea.Location = new System.Drawing.Point(335, 126);
 			this.ZoomDrawingArea.Maximum = 40;
 			this.ZoomDrawingArea.Minimum = 2;
 			this.ZoomDrawingArea.Name = "ZoomDrawingArea";
@@ -122,7 +129,7 @@
 			// LblZoom
 			// 
 			this.LblZoom.AutoSize = true;
-			this.LblZoom.Location = new System.Drawing.Point(657, 152);
+			this.LblZoom.Location = new System.Drawing.Point(657, 143);
 			this.LblZoom.Name = "LblZoom";
 			this.LblZoom.Size = new System.Drawing.Size(18, 13);
 			this.LblZoom.TabIndex = 10;
@@ -390,7 +397,7 @@
 						| System.Windows.Forms.AnchorStyles.Right)));
 			this.PictRenderText.Location = new System.Drawing.Point(160, 479);
 			this.PictRenderText.Name = "PictRenderText";
-			this.PictRenderText.Size = new System.Drawing.Size(541, 28);
+			this.PictRenderText.Size = new System.Drawing.Size(682, 28);
 			this.PictRenderText.TabIndex = 21;
 			this.PictRenderText.TabStop = false;
 			// 
@@ -405,10 +412,85 @@
 			this.BtnSetText.UseVisualStyleBackColor = true;
 			this.BtnSetText.Click += new System.EventHandler(this.BtnSetText_Click);
 			// 
+			// LblCharacter
+			// 
+			this.LblCharacter.AutoSize = true;
+			this.LblCharacter.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.LblCharacter.Location = new System.Drawing.Point(394, 164);
+			this.LblCharacter.Name = "LblCharacter";
+			this.LblCharacter.Size = new System.Drawing.Size(60, 16);
+			this.LblCharacter.TabIndex = 22;
+			this.LblCharacter.Text = "<ccode>";
+			// 
+			// BtnPrevious
+			// 
+			this.BtnPrevious.Location = new System.Drawing.Point(725, 9);
+			this.BtnPrevious.Name = "BtnPrevious";
+			this.BtnPrevious.Size = new System.Drawing.Size(75, 23);
+			this.BtnPrevious.TabIndex = 23;
+			this.BtnPrevious.Text = "Previous";
+			this.BtnPrevious.UseVisualStyleBackColor = true;
+			this.BtnPrevious.Click += new System.EventHandler(this.BtnPrevious_Click);
+			// 
+			// BtnNext
+			// 
+			this.BtnNext.Location = new System.Drawing.Point(725, 34);
+			this.BtnNext.Name = "BtnNext";
+			this.BtnNext.Size = new System.Drawing.Size(75, 23);
+			this.BtnNext.TabIndex = 23;
+			this.BtnNext.Text = "Next";
+			this.BtnNext.UseVisualStyleBackColor = true;
+			this.BtnNext.Click += new System.EventHandler(this.BtnNext_Click);
+			// 
+			// ChkGridFix
+			// 
+			this.ChkGridFix.AutoSize = true;
+			this.ChkGridFix.Location = new System.Drawing.Point(455, 34);
+			this.ChkGridFix.Name = "ChkGridFix";
+			this.ChkGridFix.Size = new System.Drawing.Size(58, 17);
+			this.ChkGridFix.TabIndex = 14;
+			this.ChkGridFix.Text = "Grid fix";
+			this.ChkGridFix.UseVisualStyleBackColor = true;
+			this.ChkGridFix.CheckedChanged += new System.EventHandler(this.ChkGridFix_CheckedChanged);
+			// 
+			// BtnAllHeight
+			// 
+			this.BtnAllHeight.Location = new System.Drawing.Point(725, 70);
+			this.BtnAllHeight.Name = "BtnAllHeight";
+			this.BtnAllHeight.Size = new System.Drawing.Size(75, 37);
+			this.BtnAllHeight.TabIndex = 23;
+			this.BtnAllHeight.Text = "All height to current";
+			this.BtnAllHeight.UseVisualStyleBackColor = true;
+			this.BtnAllHeight.Click += new System.EventHandler(this.BtnAllHeight_Click);
+			// 
+			// BtnAllWidth
+			// 
+			this.BtnAllWidth.Location = new System.Drawing.Point(725, 113);
+			this.BtnAllWidth.Name = "BtnAllWidth";
+			this.BtnAllWidth.Size = new System.Drawing.Size(75, 37);
+			this.BtnAllWidth.TabIndex = 23;
+			this.BtnAllWidth.Text = "All width to current";
+			this.BtnAllWidth.UseVisualStyleBackColor = true;
+			this.BtnAllWidth.Click += new System.EventHandler(this.BtnAllWidth_Click);
+			// 
+			// TxtCharacter
+			// 
+			this.TxtCharacter.Location = new System.Drawing.Point(335, 163);
+			this.TxtCharacter.Name = "TxtCharacter";
+			this.TxtCharacter.Size = new System.Drawing.Size(53, 20);
+			this.TxtCharacter.TabIndex = 24;
+			this.TxtCharacter.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtCharacter_KeyPress);
+			// 
 			// FontEditorPane
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			this.Controls.Add(this.TxtCharacter);
+			this.Controls.Add(this.BtnNext);
+			this.Controls.Add(this.BtnAllWidth);
+			this.Controls.Add(this.BtnAllHeight);
+			this.Controls.Add(this.BtnPrevious);
+			this.Controls.Add(this.LblCharacter);
 			this.Controls.Add(this.PictRenderText);
 			this.Controls.Add(this.BtnSetText);
 			this.Controls.Add(this.BtnRenderText);
@@ -418,6 +500,7 @@
 			this.Controls.Add(this.BtnSwapHorizontally);
 			this.Controls.Add(this.PanelMouseColor);
 			this.Controls.Add(this.BtnInvert);
+			this.Controls.Add(this.ChkGridFix);
 			this.Controls.Add(this.ChkGrid);
 			this.Controls.Add(this.BtnShiftRight);
 			this.Controls.Add(this.BtnShiftDown);
@@ -431,7 +514,7 @@
 			this.Controls.Add(this.DrawingArea);
 			this.Controls.Add(this.GroupBox);
 			this.Name = "FontEditorPane";
-			this.Size = new System.Drawing.Size(721, 510);
+			this.Size = new System.Drawing.Size(862, 510);
 			this.GroupBox.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.ZoomDrawingArea)).EndInit();
 			this.PanelSize.ResumeLayout(false);
@@ -482,5 +565,12 @@
 		private System.Windows.Forms.Button BtnRenderText;
 		private System.Windows.Forms.PictureBox PictRenderText;
 		private System.Windows.Forms.Button BtnSetText;
+		private System.Windows.Forms.Label LblCharacter;
+		private System.Windows.Forms.Button BtnPrevious;
+		private System.Windows.Forms.Button BtnNext;
+		private System.Windows.Forms.CheckBox ChkGridFix;
+		private System.Windows.Forms.Button BtnAllHeight;
+		private System.Windows.Forms.Button BtnAllWidth;
+		private System.Windows.Forms.TextBox TxtCharacter;
 	}
 }

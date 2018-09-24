@@ -52,7 +52,6 @@ namespace WFN_FontEditor
 		}
 		private void BtnConvert_Click(object sender, EventArgs e)
 		{
-
 			FontPane pane = (FontPane)FontListBox.SelectedItem;
 
 			string oldname = System.IO.Path.Combine(pane.Filepath, pane.Filename);
