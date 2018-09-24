@@ -55,7 +55,13 @@ namespace AGS.Plugin.FontEditor
 			}
 			if ( controlID.Contains(CONTROL_ID_ROOT_NODE) )
 			{
-				entry = int.Parse(controlID.Replace(CONTROL_ID_ROOT_NODE, ""));
+				try
+				{
+					entry = int.Parse(controlID.Replace(CONTROL_ID_ROOT_NODE, ""));
+				}
+				catch
+				{
+				}
 			}
 
 			if ( controlID == COMPONENT_MENU_COMMAND || controlID.Contains(CONTROL_ID_ROOT_NODE) && entry > -1 )
@@ -136,6 +142,8 @@ namespace AGS.Plugin.FontEditor
 			{
 				tp.Name += "*";
 			}
+
+			LocalEditor.GUIController.AddOrShowPane(tp);
 		}
 	}
 }

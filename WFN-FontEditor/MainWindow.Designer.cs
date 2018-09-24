@@ -68,6 +68,8 @@
 			// 
 			// FontListBox
 			// 
+			this.FontListBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+						| System.Windows.Forms.AnchorStyles.Left)));
 			this.FontListBox.FormattingEnabled = true;
 			this.FontListBox.Location = new System.Drawing.Point(12, 48);
 			this.FontListBox.Name = "FontListBox";

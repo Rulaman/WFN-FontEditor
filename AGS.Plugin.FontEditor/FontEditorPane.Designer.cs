@@ -52,7 +52,8 @@
 			this.FlowCharacterPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
 						| System.Windows.Forms.AnchorStyles.Left)
 						| System.Windows.Forms.AnchorStyles.Right)));
-			this.FlowCharacterPanel.BackColor = System.Drawing.Color.Black;
+			this.FlowCharacterPanel.AutoScroll = true;
+			this.FlowCharacterPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(16)))), ((int)(((byte)(16)))), ((int)(((byte)(16)))));
 			this.FlowCharacterPanel.Location = new System.Drawing.Point(6, 19);
 			this.FlowCharacterPanel.Name = "FlowCharacterPanel";
 			this.FlowCharacterPanel.Size = new System.Drawing.Size(307, 442);
@@ -75,8 +76,8 @@
 			this.LblInfo.Name = "LblInfo";
 			this.LblInfo.Size = new System.Drawing.Size(295, 52);
 			this.LblInfo.TabIndex = 6;
-			this.LblInfo.Text = "left click = white pixel\r\nright click = black pixel\r\n(middle click = invert pixel" +
-				")\r\nmove with pressed mouse; change the pixel under the mouse";
+			this.LblInfo.Text = "left click = white pixel\r\nright click = black pixel\r\n\r\nmove with pressed mouse; c" +
+				"hange the pixel under the mouse";
 			// 
 			// DrawingArea
 			// 
@@ -177,7 +178,7 @@
 			this.Controls.Add(this.LblInfo);
 			this.Controls.Add(this.GroupBox);
 			this.Name = "FontEditorPane";
-			this.Size = new System.Drawing.Size(702, 495);
+			this.Size = new System.Drawing.Size(929, 573);
 			this.GroupBox.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.DrawingArea)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.ZoomDrawingArea)).EndInit();

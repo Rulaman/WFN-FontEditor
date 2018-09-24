@@ -21,11 +21,9 @@ namespace AGS.Plugin.FontEditor
 		private const Int32 MaxWidth = 32;
 		private const Int32 MaxHeight = 32;
 		private bool ClickedOnCharacter = false;
-
+		private bool FontModifiedSaved = false;
 
 		public event EventHandler OnFontModified;
-		//public object Tag;
-		private bool FontModifiedSaved = false;
 
 		static bool ArraysEqual(byte[] a1, byte[] a2)
 		{
@@ -61,7 +59,6 @@ namespace AGS.Plugin.FontEditor
 					break;
 				}
 			}
-
 
 			if ( FontModifiedSaved != me.Modified )
 			{
@@ -130,6 +127,24 @@ namespace AGS.Plugin.FontEditor
 					}
 				}
 
+				/* ++ Testcode for 256-character font */
+				//for ( int i = 0; i < 128; i++ )
+				//{
+				//    FontInfo.Character[i + 128] = new CCharInfo();
+				//    FontInfo.Character[i + 128].Height = FontInfo.Character[i].Height;
+				//    FontInfo.Character[i + 128].HeightOriginal = FontInfo.Character[i].HeightOriginal;
+				//    FontInfo.Character[i + 128].Width = FontInfo.Character[i].Width;
+				//    FontInfo.Character[i + 128].WidthOriginal = FontInfo.Character[i].WidthOriginal;
+				//    FontInfo.Character[i + 128].Index = FontInfo.Character[i].Index+128;
+
+				//    FontInfo.Character[i + 128].ByteLines = new byte[FontInfo.Character[i].ByteLines.Length];
+				//    FontInfo.Character[i + 128].ByteLinesOriginal = new byte[FontInfo.Character[i].ByteLinesOriginal.Length];
+
+				//    Array.Copy(FontInfo.Character[i].ByteLines, FontInfo.Character[i + 128].ByteLines, FontInfo.Character[i + 128].ByteLines.Length);
+				//    Array.Copy(FontInfo.Character[i].ByteLinesOriginal, FontInfo.Character[i + 128].ByteLinesOriginal, FontInfo.Character[i].ByteLinesOriginal.Length);
+				//}
+				/* -- Testcode for 256-character font */
+
 				foreach ( CCharInfo item in FontInfo.Character )
 				{
 					Bitmap bitmap = null; 
@@ -140,10 +155,18 @@ namespace AGS.Plugin.FontEditor
 					pict.Width = item.Width * Scalefactor;
 					pict.Height = item.Height * Scalefactor;
 					pict.Click += new EventHandler(Character_Click);
-					
+					pict.ContextMenu = new ContextMenu();
+
+					pict.ContextMenu.Tag = pict;
+					pict.ContextMenu.MenuItems.Add("Undo").Click += new EventHandler(MenuUndoClicked);
+					pict.ContextMenu.MenuItems.Add("Redo").Click += new EventHandler(MenuRedoClicked);
+					pict.ContextMenu.MenuItems[0].Enabled = false;
+					pict.ContextMenu.MenuItems[1].Enabled = false;
+
 					CFontUtils.CreateBitmap(item, out bitmap);
 
 					item.UnscaledImage = bitmap;
+					item.UndoRedoListAdd(item.ByteLines);
 
 					Bitmap outbmp;
 					CFontUtils.ScaleBitmap(bitmap, out outbmp, Scalefactor);
@@ -154,23 +177,90 @@ namespace AGS.Plugin.FontEditor
 			}
 		}
 
+		void MenuUndoClicked(object sender, EventArgs e)
+		{
+			MenuItem menu = (MenuItem)sender;
+
+			if ( menu != null )
+			{
+				PictureBox picture = (PictureBox)menu.Parent.Tag;
+				CCharInfo charinfo = (CCharInfo)(picture.Tag);
+				charinfo.Undo();
+				menu.Enabled = charinfo.UndoPossible;
+
+				Bitmap bitmap = null;
+				CFontUtils.CreateBitmap(charinfo, out bitmap);
+
+				charinfo.UnscaledImage = bitmap;
+				Bitmap outbmp;
+				CFontUtils.ScaleBitmap(bitmap, out outbmp, Scalefactor);
+				picture.Image = outbmp;
+
+				CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = charinfo.UndoPossible;
+				CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = charinfo.RedoPossible;
+
+				CheckChange();
+			}
+		}
+		void MenuRedoClicked(object sender, EventArgs e)
+		{
+			MenuItem menu = (MenuItem)sender;
+
+			if ( menu != null )
+			{
+				PictureBox picture = (PictureBox)menu.Parent.Tag;
+				CCharInfo charinfo = (CCharInfo)(picture.Tag);
+				charinfo.Redo();
+				menu.Enabled = charinfo.RedoPossible;
+
+				Bitmap bitmap = null;
+				CFontUtils.CreateBitmap(charinfo, out bitmap);
+
+				charinfo.UnscaledImage = bitmap;
+				Bitmap outbmp;
+				CFontUtils.ScaleBitmap(bitmap, out outbmp, Scalefactor);
+				picture.Image = outbmp;
+
+				CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = charinfo.UndoPossible;
+				CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = charinfo.RedoPossible;
+
+				CheckChange();
+			}
+		}
+
 		void Character_Click(object sender, EventArgs e)
 		{
+			MouseEventArgs mouse = (MouseEventArgs)e;
 			PictureBox picture = (PictureBox)sender;
 			CCharInfo characterinfo = (CCharInfo)(picture.Tag);
-			Bitmap bitmap = (Bitmap)characterinfo.UnscaledImage;
+			ContextMenu menu = (ContextMenu)picture.ContextMenu;
 
-			Index = characterinfo.Index;
+			switch ( mouse.Button )
+			{
+			case MouseButtons.Left:
+				{
+					Bitmap bitmap = (Bitmap)characterinfo.UnscaledImage;
 
-			Bitmap scaledbitmap;
-			CFontUtils.ScaleBitmap(bitmap, out scaledbitmap, ZoomDrawingArea.Value);
-			DrawingArea.Size = scaledbitmap.Size;
-			DrawingArea.Image = scaledbitmap;
+					Index = characterinfo.Index;
 
-			ClickedOnCharacter = true;
-			numWidth.Value = characterinfo.Width;
-			numHeight.Value = characterinfo.Height;
-			ClickedOnCharacter = false;
+					Bitmap scaledbitmap;
+					CFontUtils.ScaleBitmap(bitmap, out scaledbitmap, ZoomDrawingArea.Value);
+					DrawingArea.Size = scaledbitmap.Size;
+					DrawingArea.Image = scaledbitmap;
+
+					ClickedOnCharacter = true;
+					numWidth.Value = characterinfo.Width;
+					numHeight.Value = characterinfo.Height;
+					ClickedOnCharacter = false;
+				}
+				break;
+			case MouseButtons.Right:
+				{
+					menu.MenuItems[0].Enabled = characterinfo.UndoPossible;
+					menu.MenuItems[1].Enabled = characterinfo.RedoPossible;
+				}
+				break;
+			};
 		}
 
 		private void ZoomDrawingArea_ValueChanged(object sender, EventArgs e)
@@ -264,6 +354,10 @@ namespace AGS.Plugin.FontEditor
 		private void DrawingArea_MouseDown(object sender, MouseEventArgs e)
 		{
 			bInEdit = true;
+
+			//CCharInfo charinfo = (CCharInfo)(CharacterPictureList[Index].Tag);
+			//charinfo.UndoRedoListTidyUp();
+			//charinfo.UndoRedoListAdd(charinfo.ByteLines);
 		}
 		private void DrawingArea_MouseMove(object sender, MouseEventArgs e)
 		{
@@ -284,6 +378,13 @@ namespace AGS.Plugin.FontEditor
 		{
 			bInEdit = false;
 			CheckChange();
+
+			CCharInfo charinfo = (CCharInfo)(CharacterPictureList[Index].Tag);
+			charinfo.UndoRedoListTidyUp();
+			charinfo.UndoRedoListAdd(charinfo.ByteLines);
+
+			CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = charinfo.UndoPossible;
+			CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = charinfo.RedoPossible;
 		}
 
 		public void Save()
@@ -322,6 +423,10 @@ namespace AGS.Plugin.FontEditor
 			{
 				numWidth.Value = MaxWidth;
 			}
+			if ( numWidth.Value < 1 )
+			{
+				numWidth.Value = 1;
+			}
 
 			AdjustSize();
 		}
@@ -330,6 +435,10 @@ namespace AGS.Plugin.FontEditor
 			if ( numHeight.Value > MaxHeight )
 			{
 				numHeight.Value = MaxHeight;
+			}
+			if ( numHeight.Value < 1 )
+			{
+				numHeight.Value = 1;
 			}
 
 			AdjustSize();

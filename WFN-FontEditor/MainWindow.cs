@@ -22,6 +22,7 @@ namespace WFN_FontEditor
 			{
 				string[] files = System.IO.Directory.GetFiles(fbd.SelectedPath, "*.wfn");
 				TabControl.Controls.Clear();
+				FontListBox.Items.Clear();
 
 				foreach ( string item in files )
 				{
@@ -41,17 +42,32 @@ namespace WFN_FontEditor
 
 		private void FontListBox_SelectedIndexChanged(object sender, EventArgs e)
 		{
+			bool bFound = false;
 			ListBox listbox = (ListBox)sender;
 
 			FontPane pane = (FontPane)listbox.SelectedItem;
 
-			FontEditorPane fep = new FontEditorPane(pane.Filepath, pane.Filename, pane.Fontname);
-			fep.OnFontModified += new EventHandler(fep_OnFontModified);
-			TabPage tp = new TabPage();
-			tp.Text = System.IO.Path.GetFileName(pane.Fontname);
-			tp.Controls.Add(fep);
-			TabControl.Controls.Add(tp);
-			fep.Tag = tp;
+			foreach ( TabPage tabpage in TabControl.Controls )
+			{
+				if ( tabpage.Tag == pane )
+				{
+					bFound = true;
+					break;
+				}
+
+			}
+
+			if ( !bFound )
+			{
+				FontEditorPane fep = new FontEditorPane(pane.Filepath, pane.Filename, pane.Fontname);
+				fep.OnFontModified += new EventHandler(fep_OnFontModified);
+				TabPage tp = new TabPage();
+				tp.Text = System.IO.Path.GetFileName(pane.Fontname);
+				tp.Tag = pane;
+				tp.Controls.Add(fep);
+				TabControl.Controls.Add(tp);
+				fep.Tag = tp;
+			}
 		}
 
 		void fep_OnFontModified(object sender, System.EventArgs e)

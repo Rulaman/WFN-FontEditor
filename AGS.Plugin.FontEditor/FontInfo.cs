@@ -1,29 +1,106 @@
 ﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Collections.Generic;
 
 namespace AGS.Plugin.FontEditor
 {
 	public class CCharInfo
 	{
-		public UInt16 Width;
-		public UInt16 Height;
-		public byte[] ByteLines;
+		public UInt16		Width;
+		public UInt16		Height;
+		public byte[]		ByteLines;
 
-		public UInt16 WidthOriginal;
-		public UInt16 HeightOriginal;
-		public byte[] ByteLinesOriginal;
+		public UInt16		WidthOriginal;
+		public UInt16		HeightOriginal;
+		public byte[]		ByteLinesOriginal;
 
-		public Image UnscaledImage;
-		public Int32 Index;
+		public Image		UnscaledImage;
+		public Int32		Index;
+
+		public List<byte[]>	UndoRedoList = new List<byte[]>();
+		public Int32		UndoRedoPosition = 0;
+
+		public void UndoRedoListAdd(byte[] bytearray)
+		{
+			if ( UndoRedoList.Count == 0 )
+			{
+				UndoRedoList.Add(bytearray);
+				//UndoRedoPosition++;
+			}
+			else if ( ArraysEqual(UndoRedoList[UndoRedoPosition], bytearray) )
+			{
+			}
+			else
+			{
+				UndoRedoList.Add(bytearray);
+				UndoRedoPosition++;
+			}
+		}
+		public void UndoRedoListClear()
+		{
+			UndoRedoList.Clear();
+		}
+		public void UndoRedoListTidyUp()
+		{
+			while ( UndoRedoList.Count-1 > UndoRedoPosition )
+			{
+				UndoRedoList.RemoveAt(UndoRedoList.Count - 1);
+			}
+		}
+
+		public bool RedoPossible
+		{
+			get { return (UndoRedoList.Count - 1 > UndoRedoPosition); }
+		}
+		public bool UndoPossible
+		{
+			get { return (UndoRedoPosition > 0); }
+		}
+
+		public void Undo()
+		{
+			if ( UndoRedoPosition > 0 )
+			{
+				UndoRedoPosition--;
+				ByteLines = UndoRedoList[UndoRedoPosition];
+			}
+		}
+		public void Redo()
+		{
+			if ( UndoRedoPosition < (UndoRedoList.Count) )
+			{
+				UndoRedoPosition++;
+				ByteLines = UndoRedoList[UndoRedoPosition];
+			}
+		}
+
+		private static bool ArraysEqual(byte[] a1, byte[] a2)
+		{
+			if ( a1 == a2 )
+				return true;
+
+			if ( a1 == null || a2 == null )
+				return false;
+
+			if ( a1.Length != a2.Length )
+				return false;
+
+			for ( int i = 0; i < a1.Length; i++ )
+			{
+				if ( a1[i] != a2[i] )
+					return false;
+			}
+			return true;
+		}
 	}
 	public class CFontInfo
 	{
-		public string FontPath;
-		public string FontName;
-		public string WFNName;
-		public CCharInfo[] Character;
-		public Int16 NumberOfCharacters;
+		public string		FontPath;
+		public string		FontName;
+		public string		WFNName;
+		public CCharInfo[]	Character;
+		public Int16		NumberOfCharacters;
 
 		private byte[] StringToByteArray(string str)
 		{
@@ -106,7 +183,7 @@ namespace AGS.Plugin.FontEditor
 
 			PositionOfChars = binaryWriter.BaseStream.Position;
 
-			for ( int counter = 0; counter < 128; counter++ )
+			for ( int counter = 0; counter < Character.Length; counter++ )
 			{
 				binaryWriter.Write(positionArray[counter]);
 			}
