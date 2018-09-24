@@ -5,128 +5,137 @@ namespace AGS.Plugin.FontEditor
 {
 	public class Component: IEditorComponent
 	{
-		private const string COMPONENT_ID = "FontEditorComponent";
-		private const string CONTROL_ID_CONTEXT_MENU_OPTION = "FontEditorOptionClick";
-		private const string CONTROL_ID_ROOT_NODE = "FontEditorRoot";
-		private const string CONTROL_ID_MAIN_MENU_OPTION = "FontEditorMainMenuOptionClick";
-		private const string NEW_MAIN_MENU_ID = "FontEditorMenu";
-
-		private IAGSEditor _editor;
-		private ContentDocument _pane;
-		private FontEditor LocalFontEditor;
-
-		private Dictionary<string, ContentDocument> PaneDictionary = new Dictionary<string, ContentDocument>();
-
+		private const string						COMPONENT_ID			= "WFN-FontEditor";
+		private const string						COMPONENT_MENU_COMMAND	= "WFN-FontEditorMenuCommand";
+		private const string						CONTROL_ID_ROOT_NODE	= "FontEditorRoot";
+		private IAGSEditor							LocalEditor;
+		private ContentDocument						Pane;
+		private Dictionary<int, FontPane>			FontPaneList			= new Dictionary<int, FontPane>();
+		private Dictionary<int, ContentDocument>	PaneDictionary			= new Dictionary<int, ContentDocument>();
+		private MenuCommand							MenuCommand;
+		private int									MenuEntry;
 		public Component(IAGSEditor editor)
 		{
-			_editor = editor;
-			_editor.GUIController.RegisterIcon("FontEditorIcon", Properties.Resources.FontEditor);
-			_editor.GUIController.ProjectTree.AddTreeRoot(this, CONTROL_ID_ROOT_NODE, "FontEditor", "FontEditorIcon");
-
-			LocalFontEditor = new FontEditor(editor);
-
-			_pane = new ContentDocument(LocalFontEditor, "FontEditor", this);
+			LocalEditor = editor;
+			LocalEditor.GUIController.RegisterIcon("FontEditorIcon", Properties.Resources.FontEditor);
+			LocalEditor.GUIController.ProjectTree.AddTreeRoot(this, CONTROL_ID_ROOT_NODE, "FontEditor", "FontEditorIcon");
+			LocalEditor.GUIController.ProjectTree.BeforeShowContextMenu += new BeforeShowContextMenuHandler(ProjectTree_BeforeShowContextMenu);
+			this.MenuCommand = LocalEditor.GUIController.CreateMenuCommand(this, COMPONENT_MENU_COMMAND, "Edit Font (with WFN-FontEditor)");
 		}
+
+		void ProjectTree_BeforeShowContextMenu(BeforeShowContextMenuEventArgs evArgs)
+		{
+			if ( evArgs.SelectedNodeID.StartsWith("Fnt") )
+			{
+				int entry = int.Parse(evArgs.SelectedNodeID.Replace("Fnt", ""));
+
+				if ( FontPaneList.ContainsKey(entry) )
+				{
+					MenuEntry = entry;
+					evArgs.MenuCommands.Commands.Add(MenuCommand);
+				}
+			}
+		}
+
 		string IEditorComponent.ComponentID
 		{
 			get { return COMPONENT_ID; }
 		}
 		IList<MenuCommand> IEditorComponent.GetContextMenu(string controlID)
 		{
-			List<MenuCommand> contextMenu = new List<MenuCommand>();
-			contextMenu.Add(new MenuCommand(CONTROL_ID_CONTEXT_MENU_OPTION, "FontEditor context menu option"));
-			return contextMenu;
+			return null;
 		}
-
 		void IEditorComponent.CommandClick(string controlID)
 		{
-			if ( controlID == CONTROL_ID_CONTEXT_MENU_OPTION )
+			System.Int32 entry = -1;
+
+			if ( controlID == COMPONENT_MENU_COMMAND )
 			{
-				_editor.GUIController.ShowMessage("You clicked the context menu option!", MessageBoxIconType.Information);
+				entry = MenuEntry;
 			}
-			else if ( controlID == CONTROL_ID_MAIN_MENU_OPTION )
+			if ( controlID.Contains(CONTROL_ID_ROOT_NODE) )
 			{
-				_editor.GUIController.ShowMessage("You clicked the main menu option!", MessageBoxIconType.Information);
+				entry = int.Parse(controlID.Replace(CONTROL_ID_ROOT_NODE, ""));
 			}
-			else if ( controlID == CONTROL_ID_ROOT_NODE )
-			{
-				//_editor.GUIController.AddOrShowPane(_pane);
-			}
-			else if ( controlID.Contains(CONTROL_ID_ROOT_NODE) )
+
+			if ( controlID == COMPONENT_MENU_COMMAND || controlID.Contains(CONTROL_ID_ROOT_NODE) && entry > -1 )
 			{
 				ContentDocument editpane;
-				if ( PaneDictionary.TryGetValue(controlID, out editpane) )
+				if ( PaneDictionary.TryGetValue(entry, out editpane) )
 				{
-					_editor.GUIController.AddOrShowPane(editpane);
+					if ( null == editpane )
+					{
+						FontPane fontpane;
+						FontPaneList.TryGetValue(entry, out fontpane);
+						FontEditorPane fep = new FontEditorPane(LocalEditor.CurrentGame.DirectoryPath, fontpane.Font.WFNFileName, fontpane.Font.Name);
+						fep.OnFontModified += new System.EventHandler(fep_OnFontModified);
+						
+						fontpane.Document = new ContentDocument(fep, "FontEditor: " + fontpane.Font.Name, this);
+						fep.Tag = fontpane.Document;
+						editpane = fontpane.Document;
+
+						PaneDictionary[entry] = fontpane.Document;
+					}
+					
+					LocalEditor.GUIController.AddOrShowPane(editpane);
 				}
 			}
 		}
 
-		void IEditorComponent.PropertyChanged(string propertyName, object oldValue)
-		{
-		}
-
+		void IEditorComponent.PropertyChanged(string propertyName, object oldValue) { }
 		void IEditorComponent.BeforeSaveGame()
 		{
 			foreach ( ContentDocument item in PaneDictionary.Values )
 			{
-				FontEditorPane pane = (FontEditorPane)item.Control;
-				pane.Save();
+				if ( null != item )
+				{
+					FontEditorPane pane = (FontEditorPane)item.Control;
+					pane.Save();
+				}
 			}
 		}
 		void IEditorComponent.RefreshDataFromGame()
 		{
-			// A new game has been loaded, so remove the existing pane
-			_editor.GUIController.RemovePaneIfExists(_pane);
+			LocalEditor.GUIController.RemovePaneIfExists(Pane);
 
-			if ( _editor.CurrentGame.Fonts.Count > 0 )
+			if ( LocalEditor.CurrentGame.Fonts.Count > 0 )
 			{
-				int i = 0;
-				LocalFontEditor.FontList.Clear();
-				LocalFontEditor.FontView.Nodes.Clear();
-				_editor.GUIController.ProjectTree.RemoveAllChildNodes(this, CONTROL_ID_ROOT_NODE);
+				int fontcounter = 0;
 
-				/// Sets the project tree's internal marker to the specified node.
-				/// Any AddTreeLeaf commands will add them as children of this node.
-				/// </summary>
-				_editor.GUIController.ProjectTree.StartFromNode(this, CONTROL_ID_ROOT_NODE);
+				LocalEditor.GUIController.ProjectTree.RemoveAllChildNodes(this, CONTROL_ID_ROOT_NODE);
+				LocalEditor.GUIController.ProjectTree.StartFromNode(this, CONTROL_ID_ROOT_NODE);
 
-				foreach ( AGS.Types.Font font in _editor.CurrentGame.Fonts )
+				foreach ( AGS.Types.Font font in LocalEditor.CurrentGame.Fonts )
 				{
-					if ( LocalFontEditor.AddFontToList(_editor.CurrentGame.DirectoryPath, font.WFNFileName, font.Name) )
+					if ( System.IO.File.Exists(System.IO.Path.Combine(LocalEditor.CurrentGame.DirectoryPath, font.WFNFileName)) )
 					{
-						PaneDictionary.Add(CONTROL_ID_ROOT_NODE + i.ToString(), new ContentDocument(new FontEditorPane(_editor.CurrentGame.DirectoryPath, font.WFNFileName, font.Name), "FontEditor: " + font.Name, this));
-
-					    _editor.GUIController.ProjectTree.AddTreeLeaf(this, CONTROL_ID_ROOT_NODE+i.ToString(), font.Name, "FontEditorIcon", false);
-					    i++;
+						FontPaneList.Add(fontcounter, new FontPane(null, null, font));
+						PaneDictionary.Add(fontcounter, null);
+						LocalEditor.GUIController.ProjectTree.AddTreeLeaf(this, CONTROL_ID_ROOT_NODE + fontcounter.ToString(), font.Name, "FontEditorIcon", false);
 					}
-				}
-				
-			}
-		}
-		void IEditorComponent.GameSettingsChanged()
-		{
-		}
-		void IEditorComponent.ToXml(System.Xml.XmlTextWriter writer)
-		{
-			//writer.WriteElementString("TextBoxContents", ((FontEditor)_pane.Control).TextBoxContents);
-		}
-		void IEditorComponent.FromXml(System.Xml.XmlNode node)
-		{
-			if ( node == null )
-			{
-				// node will be null if loading a 2.72 game or if
-				// the game hasn't used this plugin before
 
-				//((FontEditor)_pane.Control).TextBoxContents = "Default text";
-			}
-			else
-			{
-				//((FontEditor)_pane.Control).TextBoxContents = node.SelectSingleNode("TextBoxContents").InnerText;
+					fontcounter++;
+				}
 			}
 		}
-		void IEditorComponent.EditorShutdown()
+		void IEditorComponent.GameSettingsChanged() { }
+		void IEditorComponent.ToXml(System.Xml.XmlTextWriter writer) { }
+		void IEditorComponent.FromXml(System.Xml.XmlNode node) { }
+		void IEditorComponent.EditorShutdown() { }
+
+		void fep_OnFontModified(object sender, System.EventArgs e)
 		{
+			ContentDocument tp = (ContentDocument)((FontEditorPane)sender).Tag;
+			MyEventArgs me = (MyEventArgs)e;
+			
+			if ( tp.Name.Contains("*") && me.Modified == false )
+			{
+				tp.Name = tp.Name.Replace("*", "");
+			}
+			else if ( !tp.Name.Contains("*") && me.Modified == true )
+			{
+				tp.Name += "*";
+			}
 		}
 	}
 }

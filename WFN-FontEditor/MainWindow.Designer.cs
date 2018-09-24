@@ -32,6 +32,7 @@
 			this.BtnOpen = new System.Windows.Forms.Button();
 			this.TabControl = new System.Windows.Forms.TabControl();
 			this.BtnSave = new System.Windows.Forms.Button();
+			this.FontListBox = new System.Windows.Forms.ListBox();
 			this.SuspendLayout();
 			// 
 			// BtnOpen
@@ -49,10 +50,10 @@
 			this.TabControl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
 						| System.Windows.Forms.AnchorStyles.Left)
 						| System.Windows.Forms.AnchorStyles.Right)));
-			this.TabControl.Location = new System.Drawing.Point(12, 41);
+			this.TabControl.Location = new System.Drawing.Point(160, 41);
 			this.TabControl.Name = "TabControl";
 			this.TabControl.SelectedIndex = 0;
-			this.TabControl.Size = new System.Drawing.Size(957, 527);
+			this.TabControl.Size = new System.Drawing.Size(809, 527);
 			this.TabControl.TabIndex = 2;
 			// 
 			// BtnSave
@@ -65,11 +66,21 @@
 			this.BtnSave.UseVisualStyleBackColor = true;
 			this.BtnSave.Click += new System.EventHandler(this.BtnSave_Click);
 			// 
+			// FontListBox
+			// 
+			this.FontListBox.FormattingEnabled = true;
+			this.FontListBox.Location = new System.Drawing.Point(12, 48);
+			this.FontListBox.Name = "FontListBox";
+			this.FontListBox.Size = new System.Drawing.Size(142, 511);
+			this.FontListBox.TabIndex = 3;
+			this.FontListBox.SelectedIndexChanged += new System.EventHandler(this.FontListBox_SelectedIndexChanged);
+			// 
 			// MainWindow
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(981, 580);
+			this.Controls.Add(this.FontListBox);
 			this.Controls.Add(this.TabControl);
 			this.Controls.Add(this.BtnSave);
 			this.Controls.Add(this.BtnOpen);
@@ -85,6 +96,7 @@
 		private System.Windows.Forms.Button BtnOpen;
 		private System.Windows.Forms.TabControl TabControl;
 		private System.Windows.Forms.Button BtnSave;
+		private System.Windows.Forms.ListBox FontListBox;
 	}
 }
 

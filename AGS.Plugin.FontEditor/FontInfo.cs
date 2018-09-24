@@ -85,19 +85,23 @@ namespace AGS.Plugin.FontEditor
 		{
 			Int64 PositionOfChars = 0;
 			binaryWriter.Write(StringToByteArray(WFNName));
-			binaryWriter.Write((UInt16)1); // Dummy-Schreiben, weil Offset erst später bekannt ist
+			binaryWriter.Write((UInt16)1); // Dummy, because offset is not yet known
 
-			/* Jetzt anfangen, die Daten der Zeichen zu schreiben und die Positionen im Datenstrom merken */
-			UInt16[] positionArray = new UInt16[128];
 
-			for ( int counter = 0; counter < 128; counter++ )
+			UInt16[] positionArray = new UInt16[Character.Length];
+
+			foreach ( CCharInfo item in Character)
 			{
-				/* Hier Daten schreiben */
-				positionArray[counter] = (UInt16)binaryWriter.BaseStream.Position;
+				positionArray[item.Index] = (UInt16)binaryWriter.BaseStream.Position;
 
-				binaryWriter.Write(Character[counter].Width);
-				binaryWriter.Write(Character[counter].Height);
-				binaryWriter.Write(Character[counter].ByteLines);
+				binaryWriter.Write(item.Width);
+				binaryWriter.Write(item.Height);
+				binaryWriter.Write(item.ByteLines);
+
+				item.WidthOriginal = item.Width;
+				item.HeightOriginal = item.Height;
+				item.ByteLinesOriginal = new byte[item.ByteLines.Length];
+				Array.Copy(item.ByteLines, item.ByteLinesOriginal, item.ByteLines.Length);
 			}
 
 			PositionOfChars = binaryWriter.BaseStream.Position;
@@ -125,7 +129,6 @@ namespace AGS.Plugin.FontEditor
 			Graphics g = Graphics.FromImage(tmpbitmap);
 			g.DrawImage(oldbitmap, 0, 0, new Rectangle(0, 0, Math.Min(character.Width, newwidth), Math.Min(character.Height, newheight)), GraphicsUnit.Pixel);
 
-			/* FillRectangle bevore the DrawImage does not work. It overrides the Black color and draws white. */
 			if ( (character.Width - newwidth) < 1 )
 			{
 				/* Picture goes wider */
@@ -200,7 +203,6 @@ namespace AGS.Plugin.FontEditor
 			character.ByteLines = new byte[bmp.Height * bytesPerLine];
 			for ( int heightcounter = 0; heightcounter < bmp.Height; heightcounter++ )
 			{
-				// schreibt die Daten wieder in die character.ByteLines-Struktur
 				System.Runtime.InteropServices.Marshal.Copy(ptr, character.ByteLines, bytesPerLine * heightcounter, bytesPerLine);
 				ptr = (IntPtr)((int)ptr + bmpData.Stride);
 			}
@@ -227,7 +229,6 @@ namespace AGS.Plugin.FontEditor
 		}
 		public static void ScaleBitmap(Bitmap bitmap, out Bitmap newbmp, Int32 scale)
 		{
-			// Bitmap skalieren
 			newbmp = new Bitmap(bitmap, bitmap.Width * scale, bitmap.Height * scale);
 			Graphics g = Graphics.FromImage(newbmp);
 			g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;

@@ -99,7 +99,7 @@
 			this.ZoomDrawingArea.Name = "ZoomDrawingArea";
 			this.ZoomDrawingArea.Size = new System.Drawing.Size(322, 42);
 			this.ZoomDrawingArea.TabIndex = 9;
-			this.ZoomDrawingArea.Value = 2;
+			this.ZoomDrawingArea.Value = 15;
 			this.ZoomDrawingArea.ValueChanged += new System.EventHandler(this.ZoomDrawingArea_ValueChanged);
 			// 
 			// LblZoom
@@ -177,7 +177,7 @@
 			this.Controls.Add(this.LblInfo);
 			this.Controls.Add(this.GroupBox);
 			this.Name = "FontEditorPane";
-			this.Size = new System.Drawing.Size(975, 586);
+			this.Size = new System.Drawing.Size(702, 495);
 			this.GroupBox.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.DrawingArea)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.ZoomDrawingArea)).EndInit();

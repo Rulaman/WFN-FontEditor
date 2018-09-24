@@ -66,12 +66,7 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="FontEditor.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="FontEditor.Designer.cs">
-      <DependentUpon>FontEditor.cs</DependentUpon>
-    </Compile>
+    <Compile Include="common.cs" />
     <Compile Include="FontEditorPane.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -94,9 +89,6 @@
     <None Include="Resources\FontEditor.ico" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="FontEditor.resx">
-      <DependentUpon>FontEditor.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="FontEditorPane.resx">
       <DependentUpon>FontEditorPane.cs</DependentUpon>
     </EmbeddedResource>

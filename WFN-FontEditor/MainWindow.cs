@@ -25,11 +25,7 @@ namespace WFN_FontEditor
 
 				foreach ( string item in files )
 				{
-					FontEditorPane fep = new FontEditorPane(fbd.SelectedPath, System.IO.Path.GetFileName(item), System.IO.Path.GetFileName(item));
-					TabPage tp = new TabPage();
-					tp.Text = System.IO.Path.GetFileName(item);
-					tp.Controls.Add(fep);
-					TabControl.Controls.Add(tp);
+					FontListBox.Items.Add(new FontPane(fbd.SelectedPath, System.IO.Path.GetFileName(item), System.IO.Path.GetFileName(item)));
 				}
 			}
 		}
@@ -40,6 +36,36 @@ namespace WFN_FontEditor
 				TabPage tp = item as TabPage;
 				FontEditorPane fep = tp.Controls[0] as FontEditorPane;
 				fep.Save();
+			}
+		}
+
+		private void FontListBox_SelectedIndexChanged(object sender, EventArgs e)
+		{
+			ListBox listbox = (ListBox)sender;
+
+			FontPane pane = (FontPane)listbox.SelectedItem;
+
+			FontEditorPane fep = new FontEditorPane(pane.Filepath, pane.Filename, pane.Fontname);
+			fep.OnFontModified += new EventHandler(fep_OnFontModified);
+			TabPage tp = new TabPage();
+			tp.Text = System.IO.Path.GetFileName(pane.Fontname);
+			tp.Controls.Add(fep);
+			TabControl.Controls.Add(tp);
+			fep.Tag = tp;
+		}
+
+		void fep_OnFontModified(object sender, System.EventArgs e)
+		{
+			TabPage tp = (TabPage)((FontEditorPane)sender).Tag;
+			MyEventArgs me = (MyEventArgs)e;
+
+			if ( tp.Text.Contains("*") && me.Modified == false )
+			{
+				tp.Text = tp.Text.Replace("*", "");
+			}
+			else if ( !tp.Text.Contains("*") && me.Modified == true )
+			{
+				tp.Text += "*";
 			}
 		}
 	}
