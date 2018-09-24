@@ -94,7 +94,7 @@ namespace AGS.Plugin.FontEditor
 			return true;
 		}
 	}
-	public class CFontInfo
+	public class CWFNFontInfo
 	{
 		public string		FontPath;
 		public string		FontName;
@@ -248,10 +248,16 @@ namespace AGS.Plugin.FontEditor
 				bytesPerLine = 3;
 			}
 
-			for ( int heightcounter = 0; heightcounter < bmp.Height; heightcounter++ )
+			if ( character.ByteLines.Length == 0 )
 			{
-				System.Runtime.InteropServices.Marshal.Copy(character.ByteLines, startPos * heightcounter, ptr, bytesPerLine);
-				ptr = (IntPtr)((int)ptr + bmpData.Stride);
+			}
+			else
+			{
+				for ( int heightcounter = 0; heightcounter < bmp.Height; heightcounter++ )
+				{
+					System.Runtime.InteropServices.Marshal.Copy(character.ByteLines, startPos * heightcounter, ptr, bytesPerLine);
+					ptr = (IntPtr)((int)ptr + bmpData.Stride);
+				}
 			}
 
 			bmp.UnlockBits(bmpData);
@@ -286,7 +292,7 @@ namespace AGS.Plugin.FontEditor
 
 			bmp.UnlockBits(bmpData);
 		}
-		public static void SaveOneFont(CFontInfo font)
+		public static void SaveOneFont(CWFNFontInfo font)
 		{
 			string filename = System.IO.Path.GetFileName(font.FontPath);
 			string filepath = System.IO.Path.GetDirectoryName(font.FontPath);

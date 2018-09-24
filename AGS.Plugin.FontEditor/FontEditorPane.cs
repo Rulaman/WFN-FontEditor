@@ -17,7 +17,7 @@ namespace AGS.Plugin.FontEditor
 		private bool bInEdit = false;
 		private Point EditPoint;
 		private Int32 Scalefactor = 2;
-		private CFontInfo FontInfo;
+		private CWFNFontInfo FontInfo;
 		private const Int32 MaxWidth = 32;
 		private const Int32 MaxHeight = 32;
 		private bool ClickedOnCharacter = false;
@@ -96,7 +96,7 @@ namespace AGS.Plugin.FontEditor
 
 			if ( System.IO.File.Exists(System.IO.Path.Combine(filepath, filename)) )
 			{
-				FontInfo = new CFontInfo();
+				FontInfo = new CWFNFontInfo();
 
 				FontInfo.FontPath = System.IO.Path.Combine(filepath, filename);
 				FontInfo.FontName = fontname;
@@ -877,19 +877,13 @@ namespace AGS.Plugin.FontEditor
 				IntPtr		ptrwrite	= bmpData.Scan0;
 				byte[]		linearray	= new byte[bmpData.Stride];
 				UInt32		line;
-				UInt32		mask;
 
 				for ( int cnt = 0; cnt < Selected.Height; cnt++ )
 				{
 					System.Runtime.InteropServices.Marshal.Copy(ptrbegin, linearray, 0, bmpData.Stride);
 					Array.Reverse(linearray);
 					line = BitConverter.ToUInt32(linearray, 0);
-
-					//mask = 0xFFFFFFFF;
-					//mask >>= (31 - Selected.Width);
 					line = ~line;
-					//line &= ~mask;
-
 
 					linearray = BitConverter.GetBytes(line);
 					Array.Reverse(linearray);
@@ -904,6 +898,11 @@ namespace AGS.Plugin.FontEditor
 				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[Index].Tag), Selected);
 				((CCharInfo)(CharacterPictureList[Index].Tag)).UnscaledImage = Selected;
 			}
+
+			ClickedOnCharacter = true;
+			numWidth.Value = character.Width;
+			numHeight.Value = character.Height;
+			ClickedOnCharacter = false;
 
 			character.UndoRedoListTidyUp();
 			character.UndoRedoListAdd(character.ByteLines);

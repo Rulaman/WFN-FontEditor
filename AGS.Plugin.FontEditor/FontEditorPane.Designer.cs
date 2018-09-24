@@ -30,7 +30,6 @@
 		{
 			this.FlowCharacterPanel = new System.Windows.Forms.FlowLayoutPanel();
 			this.GroupBox = new System.Windows.Forms.GroupBox();
-			this.LblInfo = new System.Windows.Forms.Label();
 			this.ZoomDrawingArea = new System.Windows.Forms.TrackBar();
 			this.LblZoom = new System.Windows.Forms.Label();
 			this.PanelSize = new System.Windows.Forms.Panel();
@@ -44,16 +43,15 @@
 			this.BtnShiftLeft = new System.Windows.Forms.Button();
 			this.BtnShiftRight = new System.Windows.Forms.Button();
 			this.BtnShiftDown = new System.Windows.Forms.Button();
-			this.BtnSetAllHeight = new System.Windows.Forms.Button();
 			this.ChkGrid = new System.Windows.Forms.CheckBox();
 			this.BtnInvert = new System.Windows.Forms.Button();
 			this.PanelMouseColor = new System.Windows.Forms.Panel();
-			this.PanelLeftMouse = new System.Windows.Forms.Panel();
-			this.PanelRightMouse = new System.Windows.Forms.Panel();
-			this.PictSwap = new System.Windows.Forms.PictureBox();
-			this.DrawingArea = new System.Windows.Forms.PictureBox();
-			this.LblLeft = new System.Windows.Forms.Label();
 			this.LblRight = new System.Windows.Forms.Label();
+			this.LblLeft = new System.Windows.Forms.Label();
+			this.PictSwap = new System.Windows.Forms.PictureBox();
+			this.PanelRightMouse = new System.Windows.Forms.Panel();
+			this.PanelLeftMouse = new System.Windows.Forms.Panel();
+			this.DrawingArea = new System.Windows.Forms.PictureBox();
 			this.BtnSwapHorizontally = new System.Windows.Forms.Button();
 			this.BtnSwapVertically = new System.Windows.Forms.Button();
 			this.GroupBox.SuspendLayout();
@@ -90,17 +88,6 @@
 			this.GroupBox.TabStop = false;
 			this.GroupBox.Text = "Selected font settings";
 			// 
-			// LblInfo
-			// 
-			this.LblInfo.AutoSize = true;
-			this.LblInfo.Location = new System.Drawing.Point(663, 395);
-			this.LblInfo.Name = "LblInfo";
-			this.LblInfo.Size = new System.Drawing.Size(295, 52);
-			this.LblInfo.TabIndex = 6;
-			this.LblInfo.Text = "left click = white pixel\r\nright click = black pixel\r\n\r\nmove with pressed mouse; c" +
-				"hange the pixel under the mouse";
-			this.LblInfo.Visible = false;
-			// 
 			// ZoomDrawingArea
 			// 
 			this.ZoomDrawingArea.LargeChange = 1;
@@ -108,7 +95,7 @@
 			this.ZoomDrawingArea.Maximum = 40;
 			this.ZoomDrawingArea.Minimum = 2;
 			this.ZoomDrawingArea.Name = "ZoomDrawingArea";
-			this.ZoomDrawingArea.Size = new System.Drawing.Size(322, 42);
+			this.ZoomDrawingArea.Size = new System.Drawing.Size(322, 45);
 			this.ZoomDrawingArea.TabIndex = 9;
 			this.ZoomDrawingArea.Value = 15;
 			this.ZoomDrawingArea.ValueChanged += new System.EventHandler(this.ZoomDrawingArea_ValueChanged);
@@ -237,17 +224,6 @@
 			this.BtnShiftDown.UseVisualStyleBackColor = true;
 			this.BtnShiftDown.Click += new System.EventHandler(this.BtnShiftDown_Click);
 			// 
-			// BtnSetAllHeight
-			// 
-			this.BtnSetAllHeight.Location = new System.Drawing.Point(663, 450);
-			this.BtnSetAllHeight.Name = "BtnSetAllHeight";
-			this.BtnSetAllHeight.Size = new System.Drawing.Size(95, 23);
-			this.BtnSetAllHeight.TabIndex = 12;
-			this.BtnSetAllHeight.Text = "Set all height";
-			this.BtnSetAllHeight.UseVisualStyleBackColor = true;
-			this.BtnSetAllHeight.Visible = false;
-			this.BtnSetAllHeight.Click += new System.EventHandler(this.BtnSetAllHeight_Click);
-			// 
 			// ChkGrid
 			// 
 			this.ChkGrid.AutoSize = true;
@@ -281,21 +257,23 @@
 			this.PanelMouseColor.Size = new System.Drawing.Size(103, 65);
 			this.PanelMouseColor.TabIndex = 16;
 			// 
-			// PanelLeftMouse
+			// LblRight
 			// 
-			this.PanelLeftMouse.BackColor = System.Drawing.Color.White;
-			this.PanelLeftMouse.Location = new System.Drawing.Point(3, 3);
-			this.PanelLeftMouse.Name = "PanelLeftMouse";
-			this.PanelLeftMouse.Size = new System.Drawing.Size(40, 25);
-			this.PanelLeftMouse.TabIndex = 17;
+			this.LblRight.AutoSize = true;
+			this.LblRight.Location = new System.Drawing.Point(71, 46);
+			this.LblRight.Name = "LblRight";
+			this.LblRight.Size = new System.Drawing.Size(27, 13);
+			this.LblRight.TabIndex = 17;
+			this.LblRight.Text = "right";
 			// 
-			// PanelRightMouse
+			// LblLeft
 			// 
-			this.PanelRightMouse.BackColor = System.Drawing.Color.Black;
-			this.PanelRightMouse.Location = new System.Drawing.Point(25, 34);
-			this.PanelRightMouse.Name = "PanelRightMouse";
-			this.PanelRightMouse.Size = new System.Drawing.Size(40, 25);
-			this.PanelRightMouse.TabIndex = 18;
+			this.LblLeft.AutoSize = true;
+			this.LblLeft.Location = new System.Drawing.Point(44, 3);
+			this.LblLeft.Name = "LblLeft";
+			this.LblLeft.Size = new System.Drawing.Size(21, 13);
+			this.LblLeft.TabIndex = 17;
+			this.LblLeft.Text = "left";
 			// 
 			// PictSwap
 			// 
@@ -306,6 +284,22 @@
 			this.PictSwap.TabIndex = 17;
 			this.PictSwap.TabStop = false;
 			this.PictSwap.Click += new System.EventHandler(this.PictSwap_Click);
+			// 
+			// PanelRightMouse
+			// 
+			this.PanelRightMouse.BackColor = System.Drawing.Color.Black;
+			this.PanelRightMouse.Location = new System.Drawing.Point(25, 34);
+			this.PanelRightMouse.Name = "PanelRightMouse";
+			this.PanelRightMouse.Size = new System.Drawing.Size(40, 25);
+			this.PanelRightMouse.TabIndex = 18;
+			// 
+			// PanelLeftMouse
+			// 
+			this.PanelLeftMouse.BackColor = System.Drawing.Color.White;
+			this.PanelLeftMouse.Location = new System.Drawing.Point(3, 3);
+			this.PanelLeftMouse.Name = "PanelLeftMouse";
+			this.PanelLeftMouse.Size = new System.Drawing.Size(40, 25);
+			this.PanelLeftMouse.TabIndex = 17;
 			// 
 			// DrawingArea
 			// 
@@ -319,24 +313,6 @@
 			this.DrawingArea.MouseDown += new System.Windows.Forms.MouseEventHandler(this.DrawingArea_MouseDown);
 			this.DrawingArea.Paint += new System.Windows.Forms.PaintEventHandler(this.DrawingArea_Paint);
 			this.DrawingArea.MouseUp += new System.Windows.Forms.MouseEventHandler(this.DrawingArea_MouseUp);
-			// 
-			// LblLeft
-			// 
-			this.LblLeft.AutoSize = true;
-			this.LblLeft.Location = new System.Drawing.Point(44, 3);
-			this.LblLeft.Name = "LblLeft";
-			this.LblLeft.Size = new System.Drawing.Size(21, 13);
-			this.LblLeft.TabIndex = 17;
-			this.LblLeft.Text = "left";
-			// 
-			// LblRight
-			// 
-			this.LblRight.AutoSize = true;
-			this.LblRight.Location = new System.Drawing.Point(71, 46);
-			this.LblRight.Name = "LblRight";
-			this.LblRight.Size = new System.Drawing.Size(27, 13);
-			this.LblRight.TabIndex = 17;
-			this.LblRight.Text = "right";
 			// 
 			// BtnSwapHorizontally
 			// 
@@ -372,13 +348,11 @@
 			this.Controls.Add(this.BtnShiftLeft);
 			this.Controls.Add(this.BtnShiftUp);
 			this.Controls.Add(this.BtnFill);
-			this.Controls.Add(this.BtnSetAllHeight);
 			this.Controls.Add(this.BtnClear);
 			this.Controls.Add(this.PanelSize);
 			this.Controls.Add(this.LblZoom);
 			this.Controls.Add(this.ZoomDrawingArea);
 			this.Controls.Add(this.DrawingArea);
-			this.Controls.Add(this.LblInfo);
 			this.Controls.Add(this.GroupBox);
 			this.Name = "FontEditorPane";
 			this.Size = new System.Drawing.Size(721, 488);
@@ -401,7 +375,6 @@
 
 		private System.Windows.Forms.FlowLayoutPanel FlowCharacterPanel;
 		private System.Windows.Forms.GroupBox GroupBox;
-		private System.Windows.Forms.Label LblInfo;
 		private System.Windows.Forms.PictureBox DrawingArea;
 		private System.Windows.Forms.TrackBar ZoomDrawingArea;
 		private System.Windows.Forms.Label LblZoom;
@@ -416,7 +389,6 @@
 		private System.Windows.Forms.Button BtnShiftLeft;
 		private System.Windows.Forms.Button BtnShiftRight;
 		private System.Windows.Forms.Button BtnShiftDown;
-		private System.Windows.Forms.Button BtnSetAllHeight;
 		private System.Windows.Forms.CheckBox ChkGrid;
 		private System.Windows.Forms.Button BtnInvert;
 		private System.Windows.Forms.Panel PanelMouseColor;
