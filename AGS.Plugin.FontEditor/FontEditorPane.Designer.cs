@@ -67,6 +67,9 @@
 			this.BtnAllHeight = new System.Windows.Forms.Button();
 			this.BtnAllWidth = new System.Windows.Forms.Button();
 			this.TxtCharacter = new System.Windows.Forms.TextBox();
+			this.GrpAllCharacters = new System.Windows.Forms.GroupBox();
+			this.GrpOneCharacter = new System.Windows.Forms.GroupBox();
+			this.ChkOneAllCharacters = new System.Windows.Forms.CheckBox();
 			this.GroupBox.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.ZoomDrawingArea)).BeginInit();
 			this.PanelSize.SuspendLayout();
@@ -76,13 +79,15 @@
 			((System.ComponentModel.ISupportInitialize)(this.PictSwap)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.DrawingArea)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.PictRenderText)).BeginInit();
+			this.GrpAllCharacters.SuspendLayout();
+			this.GrpOneCharacter.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// FlowCharacterPanel
 			// 
-			this.FlowCharacterPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-						| System.Windows.Forms.AnchorStyles.Left)
-						| System.Windows.Forms.AnchorStyles.Right)));
+			this.FlowCharacterPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
 			this.FlowCharacterPanel.AutoScroll = true;
 			this.FlowCharacterPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(16)))), ((int)(((byte)(16)))), ((int)(((byte)(16)))));
 			this.FlowCharacterPanel.Location = new System.Drawing.Point(6, 28);
@@ -93,8 +98,8 @@
 			// 
 			// GroupBox
 			// 
-			this.GroupBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-						| System.Windows.Forms.AnchorStyles.Left)));
+			this.GroupBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
 			this.GroupBox.Controls.Add(this.FlowCharacterPanel);
 			this.GroupBox.Controls.Add(this.BtnExtend256);
 			this.GroupBox.Location = new System.Drawing.Point(6, 6);
@@ -117,7 +122,7 @@
 			// ZoomDrawingArea
 			// 
 			this.ZoomDrawingArea.LargeChange = 1;
-			this.ZoomDrawingArea.Location = new System.Drawing.Point(335, 126);
+			this.ZoomDrawingArea.Location = new System.Drawing.Point(335, 138);
 			this.ZoomDrawingArea.Maximum = 40;
 			this.ZoomDrawingArea.Minimum = 2;
 			this.ZoomDrawingArea.Name = "ZoomDrawingArea";
@@ -129,7 +134,7 @@
 			// LblZoom
 			// 
 			this.LblZoom.AutoSize = true;
-			this.LblZoom.Location = new System.Drawing.Point(657, 143);
+			this.LblZoom.Location = new System.Drawing.Point(457, 122);
 			this.LblZoom.Name = "LblZoom";
 			this.LblZoom.Size = new System.Drawing.Size(18, 13);
 			this.LblZoom.TabIndex = 10;
@@ -192,7 +197,7 @@
 			// 
 			// BtnClear
 			// 
-			this.BtnClear.Location = new System.Drawing.Point(545, 70);
+			this.BtnClear.Location = new System.Drawing.Point(12, 80);
 			this.BtnClear.Name = "BtnClear";
 			this.BtnClear.Size = new System.Drawing.Size(75, 23);
 			this.BtnClear.TabIndex = 12;
@@ -202,7 +207,7 @@
 			// 
 			// BtnFill
 			// 
-			this.BtnFill.Location = new System.Drawing.Point(545, 99);
+			this.BtnFill.Location = new System.Drawing.Point(12, 109);
 			this.BtnFill.Name = "BtnFill";
 			this.BtnFill.Size = new System.Drawing.Size(75, 23);
 			this.BtnFill.TabIndex = 12;
@@ -212,7 +217,7 @@
 			// 
 			// BtnShiftUp
 			// 
-			this.BtnShiftUp.Location = new System.Drawing.Point(487, 70);
+			this.BtnShiftUp.Location = new System.Drawing.Point(33, 19);
 			this.BtnShiftUp.Name = "BtnShiftUp";
 			this.BtnShiftUp.Size = new System.Drawing.Size(23, 23);
 			this.BtnShiftUp.TabIndex = 13;
@@ -222,7 +227,7 @@
 			// 
 			// BtnShiftLeft
 			// 
-			this.BtnShiftLeft.Location = new System.Drawing.Point(458, 99);
+			this.BtnShiftLeft.Location = new System.Drawing.Point(8, 44);
 			this.BtnShiftLeft.Name = "BtnShiftLeft";
 			this.BtnShiftLeft.Size = new System.Drawing.Size(23, 23);
 			this.BtnShiftLeft.TabIndex = 13;
@@ -232,7 +237,7 @@
 			// 
 			// BtnShiftRight
 			// 
-			this.BtnShiftRight.Location = new System.Drawing.Point(516, 99);
+			this.BtnShiftRight.Location = new System.Drawing.Point(58, 44);
 			this.BtnShiftRight.Name = "BtnShiftRight";
 			this.BtnShiftRight.Size = new System.Drawing.Size(23, 23);
 			this.BtnShiftRight.TabIndex = 13;
@@ -242,7 +247,7 @@
 			// 
 			// BtnShiftDown
 			// 
-			this.BtnShiftDown.Location = new System.Drawing.Point(487, 99);
+			this.BtnShiftDown.Location = new System.Drawing.Point(33, 44);
 			this.BtnShiftDown.Name = "BtnShiftDown";
 			this.BtnShiftDown.Size = new System.Drawing.Size(23, 23);
 			this.BtnShiftDown.TabIndex = 13;
@@ -253,7 +258,7 @@
 			// ChkGrid
 			// 
 			this.ChkGrid.AutoSize = true;
-			this.ChkGrid.Location = new System.Drawing.Point(455, 13);
+			this.ChkGrid.Location = new System.Drawing.Point(444, 13);
 			this.ChkGrid.Name = "ChkGrid";
 			this.ChkGrid.Size = new System.Drawing.Size(75, 17);
 			this.ChkGrid.TabIndex = 14;
@@ -263,7 +268,7 @@
 			// 
 			// BtnInvert
 			// 
-			this.BtnInvert.Location = new System.Drawing.Point(545, 9);
+			this.BtnInvert.Location = new System.Drawing.Point(93, 19);
 			this.BtnInvert.Name = "BtnInvert";
 			this.BtnInvert.Size = new System.Drawing.Size(75, 23);
 			this.BtnInvert.TabIndex = 15;
@@ -334,15 +339,15 @@
 			this.DrawingArea.Size = new System.Drawing.Size(322, 290);
 			this.DrawingArea.TabIndex = 7;
 			this.DrawingArea.TabStop = false;
-			this.DrawingArea.MouseMove += new System.Windows.Forms.MouseEventHandler(this.DrawingArea_MouseMove);
 			this.DrawingArea.Click += new System.EventHandler(this.DrawingArea_Click);
-			this.DrawingArea.MouseDown += new System.Windows.Forms.MouseEventHandler(this.DrawingArea_MouseDown);
 			this.DrawingArea.Paint += new System.Windows.Forms.PaintEventHandler(this.DrawingArea_Paint);
+			this.DrawingArea.MouseDown += new System.Windows.Forms.MouseEventHandler(this.DrawingArea_MouseDown);
+			this.DrawingArea.MouseMove += new System.Windows.Forms.MouseEventHandler(this.DrawingArea_MouseMove);
 			this.DrawingArea.MouseUp += new System.Windows.Forms.MouseEventHandler(this.DrawingArea_MouseUp);
 			// 
 			// BtnSwapHorizontally
 			// 
-			this.BtnSwapHorizontally.Location = new System.Drawing.Point(626, 70);
+			this.BtnSwapHorizontally.Location = new System.Drawing.Point(93, 80);
 			this.BtnSwapHorizontally.Name = "BtnSwapHorizontally";
 			this.BtnSwapHorizontally.Size = new System.Drawing.Size(75, 23);
 			this.BtnSwapHorizontally.TabIndex = 17;
@@ -352,7 +357,7 @@
 			// 
 			// BtnSwapVertically
 			// 
-			this.BtnSwapVertically.Location = new System.Drawing.Point(626, 99);
+			this.BtnSwapVertically.Location = new System.Drawing.Point(93, 109);
 			this.BtnSwapVertically.Name = "BtnSwapVertically";
 			this.BtnSwapVertically.Size = new System.Drawing.Size(75, 23);
 			this.BtnSwapVertically.TabIndex = 17;
@@ -362,7 +367,7 @@
 			// 
 			// BtnOutline
 			// 
-			this.BtnOutline.Location = new System.Drawing.Point(626, 9);
+			this.BtnOutline.Location = new System.Drawing.Point(93, 44);
 			this.BtnOutline.Name = "BtnOutline";
 			this.BtnOutline.Size = new System.Drawing.Size(75, 23);
 			this.BtnOutline.TabIndex = 18;
@@ -372,7 +377,7 @@
 			// 
 			// BtnOutlineFont
 			// 
-			this.BtnOutlineFont.Location = new System.Drawing.Point(626, 34);
+			this.BtnOutlineFont.Location = new System.Drawing.Point(6, 19);
 			this.BtnOutlineFont.Name = "BtnOutlineFont";
 			this.BtnOutlineFont.Size = new System.Drawing.Size(75, 23);
 			this.BtnOutlineFont.TabIndex = 18;
@@ -393,11 +398,11 @@
 			// 
 			// PictRenderText
 			// 
-			this.PictRenderText.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
-						| System.Windows.Forms.AnchorStyles.Right)));
+			this.PictRenderText.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
 			this.PictRenderText.Location = new System.Drawing.Point(160, 479);
 			this.PictRenderText.Name = "PictRenderText";
-			this.PictRenderText.Size = new System.Drawing.Size(682, 28);
+			this.PictRenderText.Size = new System.Drawing.Size(833, 28);
 			this.PictRenderText.TabIndex = 21;
 			this.PictRenderText.TabStop = false;
 			// 
@@ -416,7 +421,7 @@
 			// 
 			this.LblCharacter.AutoSize = true;
 			this.LblCharacter.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.LblCharacter.Location = new System.Drawing.Point(394, 164);
+			this.LblCharacter.Location = new System.Drawing.Point(457, 100);
 			this.LblCharacter.Name = "LblCharacter";
 			this.LblCharacter.Size = new System.Drawing.Size(60, 16);
 			this.LblCharacter.TabIndex = 22;
@@ -424,7 +429,7 @@
 			// 
 			// BtnPrevious
 			// 
-			this.BtnPrevious.Location = new System.Drawing.Point(725, 9);
+			this.BtnPrevious.Location = new System.Drawing.Point(526, 22);
 			this.BtnPrevious.Name = "BtnPrevious";
 			this.BtnPrevious.Size = new System.Drawing.Size(75, 23);
 			this.BtnPrevious.TabIndex = 23;
@@ -434,7 +439,7 @@
 			// 
 			// BtnNext
 			// 
-			this.BtnNext.Location = new System.Drawing.Point(725, 34);
+			this.BtnNext.Location = new System.Drawing.Point(526, 47);
 			this.BtnNext.Name = "BtnNext";
 			this.BtnNext.Size = new System.Drawing.Size(75, 23);
 			this.BtnNext.TabIndex = 23;
@@ -445,7 +450,7 @@
 			// ChkGridFix
 			// 
 			this.ChkGridFix.AutoSize = true;
-			this.ChkGridFix.Location = new System.Drawing.Point(455, 34);
+			this.ChkGridFix.Location = new System.Drawing.Point(444, 34);
 			this.ChkGridFix.Name = "ChkGridFix";
 			this.ChkGridFix.Size = new System.Drawing.Size(58, 17);
 			this.ChkGridFix.TabIndex = 14;
@@ -455,7 +460,7 @@
 			// 
 			// BtnAllHeight
 			// 
-			this.BtnAllHeight.Location = new System.Drawing.Point(725, 70);
+			this.BtnAllHeight.Location = new System.Drawing.Point(87, 19);
 			this.BtnAllHeight.Name = "BtnAllHeight";
 			this.BtnAllHeight.Size = new System.Drawing.Size(75, 37);
 			this.BtnAllHeight.TabIndex = 23;
@@ -465,7 +470,7 @@
 			// 
 			// BtnAllWidth
 			// 
-			this.BtnAllWidth.Location = new System.Drawing.Point(725, 113);
+			this.BtnAllWidth.Location = new System.Drawing.Point(87, 62);
 			this.BtnAllWidth.Name = "BtnAllWidth";
 			this.BtnAllWidth.Size = new System.Drawing.Size(75, 37);
 			this.BtnAllWidth.TabIndex = 23;
@@ -475,46 +480,78 @@
 			// 
 			// TxtCharacter
 			// 
-			this.TxtCharacter.Location = new System.Drawing.Point(335, 163);
+			this.TxtCharacter.Location = new System.Drawing.Point(460, 77);
 			this.TxtCharacter.Name = "TxtCharacter";
 			this.TxtCharacter.Size = new System.Drawing.Size(53, 20);
 			this.TxtCharacter.TabIndex = 24;
 			this.TxtCharacter.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtCharacter_KeyPress);
 			// 
+			// GrpAllCharacters
+			// 
+			this.GrpAllCharacters.Controls.Add(this.BtnOutlineFont);
+			this.GrpAllCharacters.Controls.Add(this.BtnAllHeight);
+			this.GrpAllCharacters.Controls.Add(this.BtnAllWidth);
+			this.GrpAllCharacters.Location = new System.Drawing.Point(838, 3);
+			this.GrpAllCharacters.Name = "GrpAllCharacters";
+			this.GrpAllCharacters.Size = new System.Drawing.Size(169, 137);
+			this.GrpAllCharacters.TabIndex = 25;
+			this.GrpAllCharacters.TabStop = false;
+			this.GrpAllCharacters.Text = "All characters";
+			// 
+			// GrpOneCharacter
+			// 
+			this.GrpOneCharacter.Controls.Add(this.ChkOneAllCharacters);
+			this.GrpOneCharacter.Controls.Add(this.BtnInvert);
+			this.GrpOneCharacter.Controls.Add(this.BtnClear);
+			this.GrpOneCharacter.Controls.Add(this.BtnFill);
+			this.GrpOneCharacter.Controls.Add(this.BtnSwapHorizontally);
+			this.GrpOneCharacter.Controls.Add(this.BtnSwapVertically);
+			this.GrpOneCharacter.Controls.Add(this.BtnOutline);
+			this.GrpOneCharacter.Controls.Add(this.BtnShiftRight);
+			this.GrpOneCharacter.Controls.Add(this.BtnShiftUp);
+			this.GrpOneCharacter.Controls.Add(this.BtnShiftDown);
+			this.GrpOneCharacter.Controls.Add(this.BtnShiftLeft);
+			this.GrpOneCharacter.Location = new System.Drawing.Point(607, 3);
+			this.GrpOneCharacter.Name = "GrpOneCharacter";
+			this.GrpOneCharacter.Size = new System.Drawing.Size(225, 137);
+			this.GrpOneCharacter.TabIndex = 26;
+			this.GrpOneCharacter.TabStop = false;
+			this.GrpOneCharacter.Text = "One Character";
+			// 
+			// ChkOneAllCharacters
+			// 
+			this.ChkOneAllCharacters.AutoSize = true;
+			this.ChkOneAllCharacters.Location = new System.Drawing.Point(93, -1);
+			this.ChkOneAllCharacters.Name = "ChkOneAllCharacters";
+			this.ChkOneAllCharacters.Size = new System.Drawing.Size(126, 17);
+			this.ChkOneAllCharacters.TabIndex = 0;
+			this.ChkOneAllCharacters.Text = "Use on all characters";
+			this.ChkOneAllCharacters.UseVisualStyleBackColor = true;
+			this.ChkOneAllCharacters.CheckedChanged += new System.EventHandler(this.ChkOneAllCharacters_CheckedChanged);
+			// 
 			// FontEditorPane
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			this.Controls.Add(this.GrpOneCharacter);
+			this.Controls.Add(this.GrpAllCharacters);
 			this.Controls.Add(this.TxtCharacter);
 			this.Controls.Add(this.BtnNext);
-			this.Controls.Add(this.BtnAllWidth);
-			this.Controls.Add(this.BtnAllHeight);
-			this.Controls.Add(this.BtnPrevious);
 			this.Controls.Add(this.LblCharacter);
 			this.Controls.Add(this.PictRenderText);
+			this.Controls.Add(this.BtnPrevious);
 			this.Controls.Add(this.BtnSetText);
 			this.Controls.Add(this.BtnRenderText);
-			this.Controls.Add(this.BtnOutlineFont);
-			this.Controls.Add(this.BtnOutline);
-			this.Controls.Add(this.BtnSwapVertically);
-			this.Controls.Add(this.BtnSwapHorizontally);
 			this.Controls.Add(this.PanelMouseColor);
-			this.Controls.Add(this.BtnInvert);
 			this.Controls.Add(this.ChkGridFix);
 			this.Controls.Add(this.ChkGrid);
-			this.Controls.Add(this.BtnShiftRight);
-			this.Controls.Add(this.BtnShiftDown);
-			this.Controls.Add(this.BtnShiftLeft);
-			this.Controls.Add(this.BtnShiftUp);
-			this.Controls.Add(this.BtnFill);
-			this.Controls.Add(this.BtnClear);
 			this.Controls.Add(this.PanelSize);
 			this.Controls.Add(this.LblZoom);
 			this.Controls.Add(this.ZoomDrawingArea);
 			this.Controls.Add(this.DrawingArea);
 			this.Controls.Add(this.GroupBox);
 			this.Name = "FontEditorPane";
-			this.Size = new System.Drawing.Size(862, 510);
+			this.Size = new System.Drawing.Size(1013, 510);
 			this.GroupBox.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.ZoomDrawingArea)).EndInit();
 			this.PanelSize.ResumeLayout(false);
@@ -526,6 +563,9 @@
 			((System.ComponentModel.ISupportInitialize)(this.PictSwap)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.DrawingArea)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.PictRenderText)).EndInit();
+			this.GrpAllCharacters.ResumeLayout(false);
+			this.GrpOneCharacter.ResumeLayout(false);
+			this.GrpOneCharacter.PerformLayout();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -572,5 +612,8 @@
 		private System.Windows.Forms.Button BtnAllHeight;
 		private System.Windows.Forms.Button BtnAllWidth;
 		private System.Windows.Forms.TextBox TxtCharacter;
+		private System.Windows.Forms.GroupBox GrpAllCharacters;
+		private System.Windows.Forms.GroupBox GrpOneCharacter;
+		private System.Windows.Forms.CheckBox ChkOneAllCharacters;
 	}
 }

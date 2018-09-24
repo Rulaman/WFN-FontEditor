@@ -12,10 +12,14 @@
     <AssemblyName>WFN-FontEditor</AssemblyName>
     <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <SccProjectName>&lt;Project Location In Database&gt;</SccProjectName>
-    <SccLocalPath>&lt;Local Binding Root of Project&gt;</SccLocalPath>
-    <SccAuxPath>&lt;Source Control Database&gt;</SccAuxPath>
-    <SccProvider>Mercurial Source Control Package</SccProvider>
+    <SccProjectName>
+    </SccProjectName>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccProvider>
+    </SccProvider>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <UpgradeBackupLocation>
@@ -30,6 +34,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>

@@ -27,7 +27,7 @@ namespace AGS.Plugin.FontEditor
 		private bool GridFix = false;
 		private Point Grid = new Point(-1, -1);
 		private Pen GridPen = new Pen(Color.FromArgb(255, 64, 64, 64)); // darker gray
-
+		private List<CFontInfo> EmbeddedFontList = new List<CFontInfo>();
 		public event EventHandler OnFontModified;
 
 		private enum SizeMode
@@ -99,24 +99,68 @@ namespace AGS.Plugin.FontEditor
 			return Encoding.GetEncoding(1252).GetString(bytBuffer);
 		}
 
-		public FontEditorPane()
+		private void LoadInternalResources()
 		{
+			string[] sa = typeof(FontEditorPane).Assembly.GetManifestResourceNames();
+
+			foreach (string s in sa)
+			{
+				if (s.EndsWith(".WFN"))
+				{
+					// eigebettete Schrift gefunden
+					using (System.IO.Stream stream = typeof(FontEditorPane).Assembly.GetManifestResourceStream(s))
+					{
+						using (System.IO.BinaryReader br = new System.IO.BinaryReader(stream))
+						{
+							CWFNFontInfo fi = new CWFNFontInfo();
+							fi.Read(br);
+
+							string[] namearray = System.IO.Path.GetFileNameWithoutExtension(s).Split('.');
+							string name = namearray[namearray.Length-1];
+
+							fi.FontName = "Internal" + name;
+							fi.FontPath = "InternalResource";
+							EmbeddedFontList.Add((CFontInfo)fi);
+						}
+					}
+				}
+			}
+		}
+
+		private void BaseConstructor()
+		{
+			/* ++ only for debugging */
+			//string[] sa = typeof(FontEditorPane).Assembly.GetManifestResourceNames();
+
+			//foreach (string s in sa)
+			//{
+			//	System.Diagnostics.Trace.WriteLine(s);
+			//}
+			/* -- only for debugging */
+
+			// Font resource names
+			//AGS.Plugin.FontEditor.EmbeddedResources.AGSFNT0.WFN
+			//AGS.Plugin.FontEditor.EmbeddedResources.AGSFNT1.WFN
+			//AGS.Plugin.FontEditor.EmbeddedResources.AGSFNT2.WFN
+
 			XmlSettings.Read();
 			InitializeComponent();
 			LblZoom.Text = "x" + ZoomDrawingArea.Value;
 
 			numWidth.Maximum = MaxWidth;
 			numHeight.Maximum = MaxHeight;
+
+			this.CreateControl();
+			LoadInternalResources();
+		}
+
+		public FontEditorPane()
+		{
+			BaseConstructor();	
 		}
 		public FontEditorPane(string filepath, string filename, string fontname)
 		{
-			XmlSettings.Read();
-			InitializeComponent();
-
-			LblZoom.Text = "x" + ZoomDrawingArea.Value;
-
-			numWidth.Maximum = MaxWidth;
-			numHeight.Maximum = MaxHeight;
+			BaseConstructor();
 
 			if ( System.IO.File.Exists(System.IO.Path.Combine(filepath, filename)) )
 			{
@@ -291,100 +335,8 @@ namespace AGS.Plugin.FontEditor
 				return false;
 			}
 		}
-		private void OutlineCharacter(Int32 index)
-		{
-			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[index]).Tag));
-			Bitmap Selected;
-
-			if ( null != (Selected = (Bitmap)(character.UnscaledImage)) )
-			{
-				BitmapData bmpData = Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
-				IntPtr ptrbegin = bmpData.Scan0;
-				IntPtr ptrwrite = bmpData.Scan0;
-				byte[] linearray = new byte[bmpData.Stride];
-				UInt32 line;
-				UInt32 temp2;
-
-				bool[,] bitarray = new bool[bmpData.Stride * 8, bmpData.Height];
-				bool[,] bitarraynew = new bool[bmpData.Stride * 8, bmpData.Height];
-
-				for ( int ycnt = 0; ycnt < Selected.Height; ycnt++ )
-				{
-					System.Runtime.InteropServices.Marshal.Copy(ptrbegin, linearray, 0, bmpData.Stride);
-					Array.Reverse(linearray);
-					line = BitConverter.ToUInt32(linearray, 0);
-
-					for ( int cnti = 0; cnti < MaxWidth; cnti++ )
-					{
-						temp2 = line >> (MaxWidth - (cnti + 1));
-
-						if ( (temp2 & 1) > 0 )
-						{
-							bitarray[cnti, ycnt] = true;
-						}
-					}
-
-					ptrbegin = (IntPtr)(((int)ptrbegin + bmpData.Stride));
-				}
-
-				for ( int cnt = 0; cnt < Selected.Height; cnt++ )
-				{
-					for ( int innercnt = 0; innercnt < MaxWidth; innercnt++ )
-					{
-						if ( bitarray[innercnt, cnt] )
-						{
-							/* set four pixel in the corner, if they don't set */
-							if ( ((innercnt - 1) >= 0) && ((cnt - 1) >= 0) ) { bitarraynew[innercnt - 1, cnt - 1] = bitarray[innercnt - 1, cnt - 1] == true ? false : true; }
-							if ( ((innercnt - 1) >= 0) && ((cnt + 1) < bmpData.Height) ) { bitarraynew[innercnt - 1, cnt + 1] = bitarray[innercnt - 1, cnt + 1] == true ? false : true; }
-							if ( ((innercnt + 1) < (bmpData.Stride * 8)) && ((cnt - 1) >= 0) ) { bitarraynew[innercnt + 1, cnt - 1] = bitarray[innercnt + 1, cnt - 1] == true ? false : true; }
-							if ( ((innercnt + 1) < (bmpData.Stride * 8)) && ((cnt + 1) < bmpData.Height) ) { bitarraynew[innercnt + 1, cnt + 1] = bitarray[innercnt + 1, cnt + 1] == true ? false : true; }
-
-							/* set the pixel left and right */
-							if ( ((innercnt - 1) >= 0) ) { bitarraynew[innercnt - 1, cnt] = bitarray[innercnt - 1, cnt] == true ? false : true; }
-							if ( ((innercnt + 1) < (bmpData.Stride * 8)) ) { bitarraynew[innercnt + 1, cnt] = bitarray[innercnt + 1, cnt] == true ? false : true; }
-
-							/* set the pixel upper and lower */
-							if (  ((cnt - 1) >= 0) ) { bitarraynew[innercnt, cnt - 1] = bitarray[innercnt, cnt - 1] == true ? false : true; }
-							if ( ((cnt + 1) < bmpData.Height) ) { bitarraynew[innercnt, cnt + 1] = bitarray[innercnt, cnt + 1] == true ? false : true; }
-						}
-					}
-				}
-
-				for ( int ycnt2 = 0; ycnt2 < Selected.Height; ycnt2++ )
-				{
-					line = 0;
-
-					for ( int cnti = 0; cnti < MaxWidth; cnti++ )
-					{
-						if ( bitarraynew[cnti, ycnt2] )
-						{
-							line |= (UInt32)(0x80000000 >> (cnti));
-						}
-					}
-
-					linearray = BitConverter.GetBytes(line);
-					Array.Reverse(linearray);
-					System.Runtime.InteropServices.Marshal.Copy(linearray, 0, ptrwrite, bmpData.Stride);
-
-					ptrwrite = (IntPtr)(((int)ptrwrite + bmpData.Stride));
-				}
-
-				Selected.UnlockBits(bmpData);
-
-				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[character.Index].Tag), Selected);
-				((CCharInfo)(CharacterPictureList[character.Index].Tag)).UnscaledImage = Selected;
-			}
-
-			character.UndoRedoListTidyUp();
-			character.UndoRedoListAdd(character.ByteLines);
-
-			CharacterPictureList[character.Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
-			CharacterPictureList[character.Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
-
-			CreateAndShow(character, SizeMode.ChangeNothing);
-			CheckChange();
-		}
-
+		
+		
 		void MenuUndoClicked(object sender, EventArgs e)
 		{
 			MenuItem menu = (MenuItem)sender;
@@ -972,48 +924,13 @@ namespace AGS.Plugin.FontEditor
 			PanelLeftMouse.BackColor = temp;
 		}
 
-		private void BtnClear_Click(object sender, EventArgs e)
+		#region Character functions
+		private void ShiftUpCharacter(CCharInfo character)
 		{
-			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
-
-			for ( int bytelinecounter = 0; bytelinecounter < character.ByteLines.Length; bytelinecounter++ )
-			{
-				character.ByteLines[bytelinecounter] = 0x00;
-			}
-
-			character.UndoRedoListTidyUp();
-			character.UndoRedoListAdd(character.ByteLines);
-
-			CharacterPictureList[character.Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
-			CharacterPictureList[character.Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
-
-			CreateAndShow(character, SizeMode.ChangeNothing);
-			CheckChange();
-		}
-		private void BtnFill_Click(object sender, EventArgs e)
-		{
-			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
-
-			for ( int bytelinecounter = 0; bytelinecounter < character.ByteLines.Length; bytelinecounter++)
-			{
-				character.ByteLines[bytelinecounter] = 0xFF;
-			}
-
-			character.UndoRedoListTidyUp();
-			character.UndoRedoListAdd(character.ByteLines);
-
-			CharacterPictureList[character.Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
-			CharacterPictureList[character.Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
-
-			CreateAndShow(character, SizeMode.ChangeNothing);
-			CheckChange();
-		}
-		private void BtnShiftUp_Click(object sender, EventArgs e)
-		{
-			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
+			//CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
 			Bitmap Selected;
 
-			if ( null != (Selected = (Bitmap)(character.UnscaledImage)) )
+			if (null != (Selected = (Bitmap)(character.UnscaledImage)))
 			{
 				BitmapData bmpData = Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
 				IntPtr ptrbegin = bmpData.Scan0;
@@ -1041,12 +958,12 @@ namespace AGS.Plugin.FontEditor
 			CreateAndShow(character, SizeMode.ChangeNothing);
 			CheckChange();
 		}
-		private void BtnShiftDown_Click(object sender, EventArgs e)
+		private void ShiftDownCharacter(CCharInfo character)
 		{
-			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
+			//CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
 			Bitmap Selected;
 
-			if ( null != (Selected = (Bitmap)(character.UnscaledImage)) )
+			if (null != (Selected = (Bitmap)(character.UnscaledImage)))
 			{
 				BitmapData bmpData = Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
 				IntPtr ptrbegin = bmpData.Scan0;
@@ -1074,12 +991,12 @@ namespace AGS.Plugin.FontEditor
 			CreateAndShow(character, SizeMode.ChangeNothing);
 			CheckChange();
 		}
-		private void BtnShiftLeft_Click(object sender, EventArgs e)
+		private void ShiftLeftCharacter(CCharInfo character)
 		{
-			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
+			//CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
 			Bitmap Selected;
 
-			if ( null != (Selected = (Bitmap)(character.UnscaledImage)) )
+			if (null != (Selected = (Bitmap)(character.UnscaledImage)))
 			{
 				BitmapData bmpData = Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
 				IntPtr ptrbegin = bmpData.Scan0;
@@ -1089,13 +1006,13 @@ namespace AGS.Plugin.FontEditor
 				UInt32 line;
 				UInt32 overflow;
 
-				for ( int cnt=0; cnt < Selected.Height; cnt++ )
+				for (int cnt = 0; cnt < Selected.Height; cnt++)
 				{
 					System.Runtime.InteropServices.Marshal.Copy(ptrbegin, linearray, 0, bmpData.Stride);
 					Array.Reverse(linearray);
 					line = BitConverter.ToUInt32(linearray, 0);
 
-					overflow = (line & 0x80000000) >> (Selected.Width-1);
+					overflow = (line & 0x80000000) >> (Selected.Width - 1);
 					line <<= 1;
 					line += overflow;
 
@@ -1122,12 +1039,12 @@ namespace AGS.Plugin.FontEditor
 			CreateAndShow(character, SizeMode.ChangeNothing);
 			CheckChange();
 		}
-		private void BtnShiftRight_Click(object sender, EventArgs e)
+		private void ShiftRightCharacter(CCharInfo character)
 		{
-			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
+			//CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
 			Bitmap Selected;
 
-			if ( null != (Selected = (Bitmap)(character.UnscaledImage)) )
+			if (null != (Selected = (Bitmap)(character.UnscaledImage)))
 			{
 				BitmapData bmpData = Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
 				IntPtr ptrbegin = bmpData.Scan0;
@@ -1137,7 +1054,7 @@ namespace AGS.Plugin.FontEditor
 				UInt32 line;
 				UInt32 underflow;
 
-				for ( int cnt=0; cnt < Selected.Height; cnt++ )
+				for (int cnt = 0; cnt < Selected.Height; cnt++)
 				{
 					System.Runtime.InteropServices.Marshal.Copy(ptrbegin, linearray, 0, bmpData.Stride);
 					Array.Reverse(linearray);
@@ -1170,20 +1087,20 @@ namespace AGS.Plugin.FontEditor
 			CreateAndShow(character, SizeMode.ChangeNothing);
 			CheckChange();
 		}
-		private void BtnInvert_Click(object sender, EventArgs e)
+		private void InvertCharacter(CCharInfo character)
 		{
-			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
+			//CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
 			Bitmap Selected;
 
-			if ( null != (Selected = (Bitmap)(character.UnscaledImage)) )
+			if (null != (Selected = (Bitmap)(character.UnscaledImage)))
 			{
-				BitmapData	bmpData		= Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
-				IntPtr		ptrbegin	= bmpData.Scan0;
-				IntPtr		ptrwrite	= bmpData.Scan0;
-				byte[]		linearray	= new byte[bmpData.Stride];
-				UInt32		line;
+				BitmapData bmpData = Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
+				IntPtr ptrbegin = bmpData.Scan0;
+				IntPtr ptrwrite = bmpData.Scan0;
+				byte[] linearray = new byte[bmpData.Stride];
+				UInt32 line;
 
-				for ( int cnt = 0; cnt < Selected.Height; cnt++ )
+				for (int cnt = 0; cnt < Selected.Height; cnt++)
 				{
 					System.Runtime.InteropServices.Marshal.Copy(ptrbegin, linearray, 0, bmpData.Stride);
 					Array.Reverse(linearray);
@@ -1218,18 +1135,18 @@ namespace AGS.Plugin.FontEditor
 			CreateAndShow(character, SizeMode.ChangeNothing);
 			CheckChange();
 		}
-		private void BtnSwapHorizontally_Click(object sender, EventArgs e)
+		private void SwapHorizontallyCharacter(CCharInfo character)
 		{
-			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
+			//CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
 			Bitmap Selected;
 
-			if ( null != (Selected = (Bitmap)(character.UnscaledImage)) )
+			if (null != (Selected = (Bitmap)(character.UnscaledImage)))
 			{
 				BitmapData bmpData = Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
 				IntPtr ptrbegin = bmpData.Scan0;
 				byte[][] linearray = new byte[Selected.Height][];
 
-				for ( int cnt = 0; cnt < Selected.Height; cnt++ )
+				for (int cnt = 0; cnt < Selected.Height; cnt++)
 				{
 					linearray[cnt] = new byte[bmpData.Stride];
 					System.Runtime.InteropServices.Marshal.Copy(ptrbegin, linearray[cnt], 0, bmpData.Stride);
@@ -1238,7 +1155,7 @@ namespace AGS.Plugin.FontEditor
 
 				ptrbegin = bmpData.Scan0;
 
-				for ( int cnt2 = 0; cnt2 < Selected.Height; cnt2++ )
+				for (int cnt2 = 0; cnt2 < Selected.Height; cnt2++)
 				{
 					System.Runtime.InteropServices.Marshal.Copy(linearray[Selected.Height - 1 - cnt2], 0, ptrbegin, bmpData.Stride);
 
@@ -1260,12 +1177,12 @@ namespace AGS.Plugin.FontEditor
 			CreateAndShow(character, SizeMode.ChangeNothing);
 			CheckChange();
 		}
-		private void BtnSwapVertically_Click(object sender, EventArgs e)
+		private void SwapVerticallyCharacter(CCharInfo character)
 		{
-			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
+			//CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
 			Bitmap Selected;
 
-			if ( null != (Selected = (Bitmap)(character.UnscaledImage)) )
+			if (null != (Selected = (Bitmap)(character.UnscaledImage)))
 			{
 				BitmapData bmpData = Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
 				IntPtr ptrbegin = bmpData.Scan0;
@@ -1273,7 +1190,7 @@ namespace AGS.Plugin.FontEditor
 				byte[] linearray = new byte[bmpData.Stride];
 				UInt32 line;
 
-				for ( int cnt = 0; cnt < Selected.Height; cnt++ )
+				for (int cnt = 0; cnt < Selected.Height; cnt++)
 				{
 					System.Runtime.InteropServices.Marshal.Copy(ptrbegin, linearray, 0, bmpData.Stride);
 					Array.Reverse(linearray);
@@ -1282,13 +1199,13 @@ namespace AGS.Plugin.FontEditor
 					UInt32 temp = 0;
 					UInt32 temp2 = 0;
 
-					for(int cnti=0;cnti<32;cnti++)
+					for (int cnti = 0; cnti < 32; cnti++)
 					{
-						temp2 = line >> (32-(cnti+1));
-						temp |= (temp2&1) << cnti;
+						temp2 = line >> (32 - (cnti + 1));
+						temp |= (temp2 & 1) << cnti;
 					}
-					
-					line = temp << (32-Selected.Width);
+
+					line = temp << (32 - Selected.Width);
 
 					linearray = BitConverter.GetBytes(line);
 					Array.Reverse(linearray);
@@ -1313,16 +1230,208 @@ namespace AGS.Plugin.FontEditor
 			CreateAndShow(character, SizeMode.ChangeNothing);
 			CheckChange();
 		}
+		private void ClearCharacter(CCharInfo character)
+		{
+			//CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
+
+			for (int bytelinecounter = 0; bytelinecounter < character.ByteLines.Length; bytelinecounter++)
+			{
+				character.ByteLines[bytelinecounter] = 0x00;
+			}
+
+			character.UndoRedoListTidyUp();
+			character.UndoRedoListAdd(character.ByteLines);
+
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+
+			CreateAndShow(character, SizeMode.ChangeNothing);
+			CheckChange();
+		}
+		private void FillCharacter(CCharInfo character)
+		{
+			//CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
+
+			for (int bytelinecounter = 0; bytelinecounter < character.ByteLines.Length; bytelinecounter++)
+			{
+				character.ByteLines[bytelinecounter] = 0xFF;
+			}
+
+			character.UndoRedoListTidyUp();
+			character.UndoRedoListAdd(character.ByteLines);
+
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+
+			CreateAndShow(character, SizeMode.ChangeNothing);
+			CheckChange();
+		}
+		private void OutlineCharacter(CCharInfo character)
+		{
+			//CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[index]).Tag));
+			Bitmap Selected;
+
+			if (null != (Selected = (Bitmap)(character.UnscaledImage)))
+			{
+				BitmapData bmpData = Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
+				IntPtr ptrbegin = bmpData.Scan0;
+				IntPtr ptrwrite = bmpData.Scan0;
+				byte[] linearray = new byte[bmpData.Stride];
+				UInt32 line;
+				UInt32 temp2;
+
+				bool[,] bitarray = new bool[bmpData.Stride * 8, bmpData.Height];
+				bool[,] bitarraynew = new bool[bmpData.Stride * 8, bmpData.Height];
+
+				for (int ycnt = 0; ycnt < Selected.Height; ycnt++)
+				{
+					System.Runtime.InteropServices.Marshal.Copy(ptrbegin, linearray, 0, bmpData.Stride);
+					Array.Reverse(linearray);
+					line = BitConverter.ToUInt32(linearray, 0);
+
+					for (int cnti = 0; cnti < MaxWidth; cnti++)
+					{
+						temp2 = line >> (MaxWidth - (cnti + 1));
+
+						if ((temp2 & 1) > 0)
+						{
+							bitarray[cnti, ycnt] = true;
+						}
+					}
+
+					ptrbegin = (IntPtr)(((int)ptrbegin + bmpData.Stride));
+				}
+
+				for (int cnt = 0; cnt < Selected.Height; cnt++)
+				{
+					for (int innercnt = 0; innercnt < MaxWidth; innercnt++)
+					{
+						if (bitarray[innercnt, cnt])
+						{
+							/* set four pixel in the corner, if they don't set */
+							if (((innercnt - 1) >= 0) && ((cnt - 1) >= 0)) { bitarraynew[innercnt - 1, cnt - 1] = bitarray[innercnt - 1, cnt - 1] == true ? false : true; }
+							if (((innercnt - 1) >= 0) && ((cnt + 1) < bmpData.Height)) { bitarraynew[innercnt - 1, cnt + 1] = bitarray[innercnt - 1, cnt + 1] == true ? false : true; }
+							if (((innercnt + 1) < (bmpData.Stride * 8)) && ((cnt - 1) >= 0)) { bitarraynew[innercnt + 1, cnt - 1] = bitarray[innercnt + 1, cnt - 1] == true ? false : true; }
+							if (((innercnt + 1) < (bmpData.Stride * 8)) && ((cnt + 1) < bmpData.Height)) { bitarraynew[innercnt + 1, cnt + 1] = bitarray[innercnt + 1, cnt + 1] == true ? false : true; }
+
+							/* set the pixel left and right */
+							if (((innercnt - 1) >= 0)) { bitarraynew[innercnt - 1, cnt] = bitarray[innercnt - 1, cnt] == true ? false : true; }
+							if (((innercnt + 1) < (bmpData.Stride * 8))) { bitarraynew[innercnt + 1, cnt] = bitarray[innercnt + 1, cnt] == true ? false : true; }
+
+							/* set the pixel upper and lower */
+							if (((cnt - 1) >= 0)) { bitarraynew[innercnt, cnt - 1] = bitarray[innercnt, cnt - 1] == true ? false : true; }
+							if (((cnt + 1) < bmpData.Height)) { bitarraynew[innercnt, cnt + 1] = bitarray[innercnt, cnt + 1] == true ? false : true; }
+						}
+					}
+				}
+
+				for (int ycnt2 = 0; ycnt2 < Selected.Height; ycnt2++)
+				{
+					line = 0;
+
+					for (int cnti = 0; cnti < MaxWidth; cnti++)
+					{
+						if (bitarraynew[cnti, ycnt2])
+						{
+							line |= (UInt32)(0x80000000 >> (cnti));
+						}
+					}
+
+					linearray = BitConverter.GetBytes(line);
+					Array.Reverse(linearray);
+					System.Runtime.InteropServices.Marshal.Copy(linearray, 0, ptrwrite, bmpData.Stride);
+
+					ptrwrite = (IntPtr)(((int)ptrwrite + bmpData.Stride));
+				}
+
+				Selected.UnlockBits(bmpData);
+
+				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[character.Index].Tag), Selected);
+				((CCharInfo)(CharacterPictureList[character.Index].Tag)).UnscaledImage = Selected;
+			}
+
+			character.UndoRedoListTidyUp();
+			character.UndoRedoListAdd(character.ByteLines);
+
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+			CharacterPictureList[character.Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+
+			CreateAndShow(character, SizeMode.ChangeNothing);
+			CheckChange();
+		}
+
+		private void CharacterFunctionOneOrAll(Action<CCharInfo> function, bool onechar)
+		{
+			CCharInfo character;
+
+			if (onechar)
+			{
+				foreach (PictureBox item in CharacterPictureList)
+				{
+					character = ((CCharInfo)(item.Tag));
+					function(character);
+				}
+			}
+			else
+			{
+				character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
+				function(character);
+			}
+		}
+		#endregion Character functions
+
+		private void BtnClear_Click(object sender, EventArgs e)
+		{
+			CharacterFunctionOneOrAll(ClearCharacter, ChkOneAllCharacters.Checked);
+		}
+
+		private void BtnFill_Click(object sender, EventArgs e)
+		{
+			CharacterFunctionOneOrAll(FillCharacter, ChkOneAllCharacters.Checked);
+		}
+		
+		private void BtnShiftUp_Click(object sender, EventArgs e)
+		{
+			CharacterFunctionOneOrAll(ShiftUpCharacter, ChkOneAllCharacters.Checked);
+		}
+
+		private void BtnShiftDown_Click(object sender, EventArgs e)
+		{
+			CharacterFunctionOneOrAll(ShiftDownCharacter, ChkOneAllCharacters.Checked);
+		}
+
+		private void BtnShiftLeft_Click(object sender, EventArgs e)
+		{
+			CharacterFunctionOneOrAll(ShiftLeftCharacter, ChkOneAllCharacters.Checked);
+		}
+
+		private void BtnShiftRight_Click(object sender, EventArgs e)
+		{
+			CharacterFunctionOneOrAll(ShiftRightCharacter, ChkOneAllCharacters.Checked);
+		}
+
+		private void BtnInvert_Click(object sender, EventArgs e)
+		{
+			CharacterFunctionOneOrAll(InvertCharacter, ChkOneAllCharacters.Checked);
+		}
+
+		private void BtnSwapHorizontally_Click(object sender, EventArgs e)
+		{
+			CharacterFunctionOneOrAll(SwapHorizontallyCharacter, ChkOneAllCharacters.Checked);
+		}
+
+		private void BtnSwapVertically_Click(object sender, EventArgs e)
+		{
+			CharacterFunctionOneOrAll(SwapVerticallyCharacter, ChkOneAllCharacters.Checked);
+		}
+
 		private void BtnOutline_Click(object sender, EventArgs e)
 		{
-			OutlineCharacter(Index);
+			CharacterFunctionOneOrAll(OutlineCharacter, ChkOneAllCharacters.Checked);
 		}
 		private void BtnOutlineFont_Click(object sender, EventArgs e)
 		{
-			for ( Int32 counter = 0; counter < CharacterPictureList.Count; counter++ )
-			{
-				OutlineCharacter(counter);
-			}
+			CharacterFunctionOneOrAll(OutlineCharacter, true); // Outline the whole font
 		}
 		private void BtnRenderText_Click(object sender, EventArgs e)
 		{
@@ -1435,6 +1544,18 @@ namespace AGS.Plugin.FontEditor
 						}
 					}
 				}
+			}
+		}
+
+		private void ChkOneAllCharacters_CheckedChanged(object sender, EventArgs e)
+		{
+			if (ChkOneAllCharacters.Checked)
+			{
+				GrpOneCharacter.BackColor = SystemColors.Highlight;
+			}
+			else
+			{
+				GrpOneCharacter.BackColor = SystemColors.Control;
 			}
 		}
 	}
