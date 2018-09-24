@@ -22,6 +22,9 @@ namespace AGS.Plugin.FontEditor
 		private const Int32 MaxHeight = 32;
 		private bool ClickedOnCharacter = false;
 		private bool FontModifiedSaved = false;
+		private bool ShowGrid = false;
+		private Point Grid = new Point(-1, -1);
+		private Pen GridPen = new Pen(Color.FromArgb(255, 64, 64, 64)); // darker gray
 
 		public event EventHandler OnFontModified;
 
@@ -71,19 +74,14 @@ namespace AGS.Plugin.FontEditor
 			}
 		}
 
-		private void SetIndex(PictureBox picturebox)
+		internal static string Chr(int p_intByte)
 		{
-			Int32 index = 0;
-			foreach ( PictureBox item in CharacterPictureList )
+			if ( (p_intByte < 0) || (p_intByte > 255) )
 			{
-				if ( picturebox == item )
-				{
-					break;
-				}
-				index++;
+				throw new ArgumentOutOfRangeException("p_intByte", p_intByte, "Must be between 0 and 255.");
 			}
-
-			Index = index;
+			byte[] bytBuffer = new byte[] { (byte)p_intByte };
+			return Encoding.GetEncoding(1252).GetString(bytBuffer);
 		}
 
 		public FontEditorPane()
@@ -157,9 +155,14 @@ namespace AGS.Plugin.FontEditor
 					pict.Click += new EventHandler(Character_Click);
 					pict.ContextMenu = new ContextMenu();
 
+					ToolTip tt = new ToolTip();
+					tt.SetToolTip(pict, Chr(item.Index));
+
 					pict.ContextMenu.Tag = pict;
 					pict.ContextMenu.MenuItems.Add("Undo").Click += new EventHandler(MenuUndoClicked);
 					pict.ContextMenu.MenuItems.Add("Redo").Click += new EventHandler(MenuRedoClicked);
+					pict.ContextMenu.MenuItems.Add("Copy").Click += new EventHandler(MenuCopyClicked);
+					pict.ContextMenu.MenuItems.Add("Paste").Click += new EventHandler(MenuPasteClicked);
 					pict.ContextMenu.MenuItems[0].Enabled = false;
 					pict.ContextMenu.MenuItems[1].Enabled = false;
 
@@ -177,6 +180,42 @@ namespace AGS.Plugin.FontEditor
 			}
 		}
 
+		private bool CorrectImage(Bitmap original, out Bitmap corrected)
+		{
+
+			BitmapData bmpData = original.LockBits(new Rectangle(0, 0, original.Width, original.Height), ImageLockMode.ReadWrite, original.PixelFormat);
+
+			if ( bmpData.Stride < 0 )
+			{
+				corrected = new Bitmap(original.Width, original.Height, original.PixelFormat);
+				BitmapData cbmpdata = corrected.LockBits(new Rectangle(0, 0, corrected.Width, corrected.Height), ImageLockMode.ReadWrite, corrected.PixelFormat);
+
+				IntPtr ptroriginal = bmpData.Scan0;
+				IntPtr ptrorrected = cbmpdata.Scan0;
+				byte[] array = new byte[Math.Abs(bmpData.Stride)];
+
+				for ( int cnt = 0; cnt < original.Height; cnt++ )
+				{
+					System.Runtime.InteropServices.Marshal.Copy(ptroriginal, array, 0, Math.Abs(bmpData.Stride));
+					System.Runtime.InteropServices.Marshal.Copy(array, 0, ptrorrected, cbmpdata.Stride);
+
+					ptroriginal = (IntPtr)((int)ptroriginal + bmpData.Stride);
+					ptrorrected = (IntPtr)((int)ptrorrected + cbmpdata.Stride);
+				}
+
+				original.UnlockBits(bmpData);
+				corrected.UnlockBits(cbmpdata);
+
+				return true;
+			}
+			else
+			{
+				original.UnlockBits(bmpData);
+				corrected = null;
+				return false;
+			}
+		}
+
 		void MenuUndoClicked(object sender, EventArgs e)
 		{
 			MenuItem menu = (MenuItem)sender;
@@ -184,21 +223,22 @@ namespace AGS.Plugin.FontEditor
 			if ( menu != null )
 			{
 				PictureBox picture = (PictureBox)menu.Parent.Tag;
-				CCharInfo charinfo = (CCharInfo)(picture.Tag);
-				charinfo.Undo();
-				menu.Enabled = charinfo.UndoPossible;
+				CCharInfo character = (CCharInfo)(picture.Tag);
+				character.Undo();
+				menu.Enabled = character.UndoPossible;
 
 				Bitmap bitmap = null;
-				CFontUtils.CreateBitmap(charinfo, out bitmap);
+				CFontUtils.CreateBitmap(character, out bitmap);
 
-				charinfo.UnscaledImage = bitmap;
+				character.UnscaledImage = bitmap;
 				Bitmap outbmp;
 				CFontUtils.ScaleBitmap(bitmap, out outbmp, Scalefactor);
 				picture.Image = outbmp;
 
-				CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = charinfo.UndoPossible;
-				CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = charinfo.RedoPossible;
+				CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+				CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
 
+				CreateAndShow(character, false);
 				CheckChange();
 			}
 		}
@@ -209,20 +249,87 @@ namespace AGS.Plugin.FontEditor
 			if ( menu != null )
 			{
 				PictureBox picture = (PictureBox)menu.Parent.Tag;
-				CCharInfo charinfo = (CCharInfo)(picture.Tag);
-				charinfo.Redo();
-				menu.Enabled = charinfo.RedoPossible;
+				CCharInfo character = (CCharInfo)(picture.Tag);
+				character.Redo();
+				menu.Enabled = character.RedoPossible;
 
 				Bitmap bitmap = null;
-				CFontUtils.CreateBitmap(charinfo, out bitmap);
+				CFontUtils.CreateBitmap(character, out bitmap);
 
-				charinfo.UnscaledImage = bitmap;
+				character.UnscaledImage = bitmap;
 				Bitmap outbmp;
 				CFontUtils.ScaleBitmap(bitmap, out outbmp, Scalefactor);
 				picture.Image = outbmp;
 
-				CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = charinfo.UndoPossible;
-				CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = charinfo.RedoPossible;
+				CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+				CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+
+				CreateAndShow(character, false);
+				CheckChange();
+			}
+		}
+		void MenuCopyClicked(object sender, EventArgs e)
+		{
+			MenuItem menu = (MenuItem)sender;
+
+			if ( menu != null )
+			{
+				PictureBox picture = (PictureBox)menu.Parent.Tag;
+				CCharInfo charinfo = (CCharInfo)(picture.Tag);
+				Clipboard.SetData(DataFormats.Dib, charinfo.UnscaledImage);
+
+				CheckChange();
+			}
+		}
+		void MenuPasteClicked(object sender, EventArgs e)
+		{
+			MenuItem menu = (MenuItem)sender;
+
+			if ( menu != null )
+			{
+				PictureBox picture = (PictureBox)menu.Parent.Tag;
+				CCharInfo characterinfo = (CCharInfo)(picture.Tag);
+				object t = characterinfo.UnscaledImage.Tag;
+				Bitmap bitmap = (Bitmap)Clipboard.GetImage();
+				
+				Bitmap untested = Indexed.Image.CopyToBpp(bitmap, 1);
+				Bitmap corrected = null;
+				if ( CorrectImage(untested, out corrected) )
+				{
+					characterinfo.UnscaledImage = corrected;
+				}
+				else
+				{
+					characterinfo.UnscaledImage = untested;
+				}
+
+				CFontUtils.SaveByteLinesFromPicture(characterinfo, (Bitmap)characterinfo.UnscaledImage);
+				characterinfo.UnscaledImage.Tag = t;
+				bitmap = (Bitmap)characterinfo.UnscaledImage;
+				Index = characterinfo.Index;
+
+				Bitmap scaledbitmap;
+				CFontUtils.ScaleBitmap(bitmap, out scaledbitmap, ZoomDrawingArea.Value);
+				DrawingArea.Size = scaledbitmap.Size;
+				DrawingArea.Image = scaledbitmap;
+				characterinfo.Width = (UInt16)characterinfo.UnscaledImage.Width;
+				characterinfo.Height = (UInt16)characterinfo.UnscaledImage.Height;
+
+				ClickedOnCharacter = true;
+				numWidth.Value = characterinfo.Width;
+				numHeight.Value = characterinfo.Height;
+				ClickedOnCharacter = false;
+
+				Bitmap outbmp;
+				CFontUtils.ScaleBitmap(bitmap, out outbmp, Scalefactor);
+				CharacterPictureList[Index].Image = outbmp;
+				CharacterPictureList[Index].Size = outbmp.Size;
+
+				characterinfo.UndoRedoListTidyUp();
+				characterinfo.UndoRedoListAdd(characterinfo.ByteLines);
+
+				CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = characterinfo.UndoPossible;
+				CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = characterinfo.RedoPossible;
 
 				CheckChange();
 			}
@@ -243,15 +350,39 @@ namespace AGS.Plugin.FontEditor
 
 					Index = characterinfo.Index;
 
-					Bitmap scaledbitmap;
-					CFontUtils.ScaleBitmap(bitmap, out scaledbitmap, ZoomDrawingArea.Value);
-					DrawingArea.Size = scaledbitmap.Size;
-					DrawingArea.Image = scaledbitmap;
-
 					ClickedOnCharacter = true;
 					numWidth.Value = characterinfo.Width;
 					numHeight.Value = characterinfo.Height;
 					ClickedOnCharacter = false;
+
+					Bitmap scaledbitmap;
+					CFontUtils.ScaleBitmap(bitmap, out scaledbitmap, ZoomDrawingArea.Value);
+					DrawingArea.Size = scaledbitmap.Size;
+#if XY
+					DrawingArea.Image = scaledbitmap;
+#else				
+					Graphics graphics = DrawingArea.CreateGraphics();
+					graphics.DrawImage(scaledbitmap, 0, 0);
+					
+					if ( ShowGrid )
+					{
+					    Int32 zoom = ZoomDrawingArea.Value;
+
+					    for ( int xcnt = 0; xcnt < characterinfo.Width; xcnt++ )
+					    {
+					        for ( int ycnt = 0; ycnt < characterinfo.Height; ycnt++ )
+					        {
+					            graphics.DrawRectangle(GridPen, xcnt * zoom, ycnt * zoom, zoom, zoom);
+					        }
+					    }
+					}
+					
+					graphics.Dispose();
+#endif
+					
+					
+
+					PaintOnDrawingArea(DrawingArea, null);
 				}
 				break;
 			case MouseButtons.Right:
@@ -275,9 +406,11 @@ namespace AGS.Plugin.FontEditor
 			LblZoom.Text = "x" + ZoomDrawingArea.Value;
 		}
 
-		private void PaintOnDwaringArea(object sender, EventArgs e)
+		private void PaintOnDrawingArea(object sender, EventArgs e)
 		{
-			MouseEventArgs mouse = (MouseEventArgs)e;
+			MouseEventArgs mouse = e as MouseEventArgs;
+
+
 			Graphics graphics = ((PictureBox)sender).CreateGraphics();
 			Int32 zoom = ZoomDrawingArea.Value;
 			Bitmap Selected;
@@ -285,94 +418,121 @@ namespace AGS.Plugin.FontEditor
 
 			if ( null != (Selected = (Bitmap)(((CCharInfo)(CharacterPictureList[Index].Tag)).UnscaledImage)) )
 			{
-				if ( ((mouse.X / zoom) <= Selected.Width) || ((mouse.Y / zoom) <= Selected.Height) )
+				if ( null != mouse && mouse.Button != MouseButtons.None )
 				{
-					SolidBrush brush = new SolidBrush(Color.Gray);
-					BitmapData bmpData = Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
-					IntPtr ptr = bmpData.Scan0;
-					ptr = (IntPtr)((int)ptr + bmpData.Stride * (mouse.Y / zoom));
-					byte[] b = new byte[bmpData.Stride];
-					System.Runtime.InteropServices.Marshal.Copy(ptr, b, 0, bmpData.Stride);
-					Array.Reverse(b);
-					UInt32 line = BitConverter.ToUInt32(b, 0);
-
-					switch ( mouse.Button )
+					if ( ((mouse.X / zoom) <= Selected.Width) || ((mouse.Y / zoom) <= Selected.Height) )
 					{
-					case MouseButtons.Left:
-						{
-							col = Color.White;
-						}
-						break;
-					case MouseButtons.Right:
-						{
-							col = Color.Black;
-						}
-						break;
-					case MouseButtons.Middle:
-						{
-							//col = Selected.GetPixel(mouse.X / zoom, mouse.Y / zoom) == Color.White ? Color.Black : Color.White;
-							col = ((line >> (mouse.X / zoom)) > 0) ? Color.Black : Color.White;
-						}
-						break;
-					};
+						SolidBrush brush = new SolidBrush(Color.Gray);
+						BitmapData bmpData = Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
+						IntPtr ptr = bmpData.Scan0;
+						ptr = (IntPtr)((int)ptr + bmpData.Stride * (mouse.Y / zoom));
+						byte[] b = new byte[bmpData.Stride];
+						System.Runtime.InteropServices.Marshal.Copy(ptr, b, 0, bmpData.Stride);
+						Array.Reverse(b);
+						UInt32 line = BitConverter.ToUInt32(b, 0);
 
-					if ( Color.Black == col )
-					{
-						brush = new SolidBrush(Color.Black);
-						line &= ~(UInt32)(0x80000000 >> (mouse.X / zoom));
+						switch ( mouse.Button )
+						{
+						case MouseButtons.Left:
+							{
+								col = PanelLeftMouse.BackColor;
+							}
+							break;
+						case MouseButtons.Right:
+							{
+								col = PanelRightMouse.BackColor;
+							}
+							break;
+						case MouseButtons.Middle:
+							{
+								col = ((line >> (mouse.X / zoom)) > 0) ? PanelLeftMouse.BackColor : PanelRightMouse.BackColor;
+							}
+							break;
+						};
+
+						if ( Color.Black == col )
+						{
+							brush = new SolidBrush(Color.Black);
+							line &= ~(UInt32)(0x80000000 >> (mouse.X / zoom));
+						}
+						else
+						{
+							brush = new SolidBrush(Color.White);
+							line |= (UInt32)(0x80000000 >> (mouse.X / zoom));
+						}
+
+						b = BitConverter.GetBytes(line);
+						Array.Reverse(b);
+						((CCharInfo)(CharacterPictureList[Index].Tag)).UnscaledImage = Selected;
+
+						System.Runtime.InteropServices.Marshal.Copy(b, 0, ptr, bmpData.Stride);
+						Selected.UnlockBits(bmpData);
+						graphics.FillRectangle(brush, new Rectangle((mouse.X / zoom) * zoom, (mouse.Y / zoom) * zoom, zoom, zoom));
+						brush.Dispose();
 					}
-					else
-					{
-						brush = new SolidBrush(Color.White);
-						line |= (UInt32)(0x80000000 >> (mouse.X / zoom));
-					}
 
-					b = BitConverter.GetBytes(line);
-					Array.Reverse(b);
+					CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[Index].Tag), Selected);
 					((CCharInfo)(CharacterPictureList[Index].Tag)).UnscaledImage = Selected;
 
-					System.Runtime.InteropServices.Marshal.Copy(b, 0, ptr, bmpData.Stride);
-					Selected.UnlockBits(bmpData);
-					graphics.FillRectangle(brush, new Rectangle((mouse.X / zoom) * zoom, (mouse.Y / zoom) * zoom, zoom, zoom));
-					brush.Dispose();
+					Bitmap outbmp;
+					CFontUtils.ScaleBitmap(Selected, out outbmp, Scalefactor);
+					CharacterPictureList[Index].Image = outbmp;
 				}
 
-				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[Index].Tag), Selected);
-				((CCharInfo)(CharacterPictureList[Index].Tag)).UnscaledImage = Selected;
-
-				Bitmap outbmp;
-				CFontUtils.ScaleBitmap(Selected, out outbmp, Scalefactor);
-				CharacterPictureList[Index].Image = outbmp;
+				if ( ShowGrid )
+				{
+					for ( int xcnt = 0; xcnt < Selected.Width; xcnt++ )
+					{
+						for ( int ycnt = 0; ycnt < Selected.Height; ycnt++)
+						{
+							graphics.DrawRectangle(GridPen, xcnt * zoom, ycnt * zoom, zoom, zoom);
+						}
+					}
+				}
 			}
+
+			graphics.Dispose();
 		}
 
 		private void DrawingArea_Click(object sender, EventArgs e)
 		{
-			PaintOnDwaringArea(sender, e);
+			PaintOnDrawingArea(sender, e);
 			CheckChange();
 		}
 		private void DrawingArea_MouseDown(object sender, MouseEventArgs e)
 		{
 			bInEdit = true;
-
-			//CCharInfo charinfo = (CCharInfo)(CharacterPictureList[Index].Tag);
-			//charinfo.UndoRedoListTidyUp();
-			//charinfo.UndoRedoListAdd(charinfo.ByteLines);
 		}
 		private void DrawingArea_MouseMove(object sender, MouseEventArgs e)
 		{
+			Int32 zoom = ZoomDrawingArea.Value;
+
 			if ( bInEdit )
 			{
-				Int32 zoom = ZoomDrawingArea.Value;
-
 				if ( ((e.X / zoom) - EditPoint.X != 0) || ((e.Y / zoom) - EditPoint.Y != 0) )
 				{
 					EditPoint.X = e.X / zoom;
 					EditPoint.Y = e.Y / zoom;
 
-					PaintOnDwaringArea(sender, e);
+					PaintOnDrawingArea(sender, e);
 				}
 			}
+
+			//if ( (Grid.X != (e.X / zoom)) || (Grid.Y != (e.Y / zoom)) )
+			//{
+			//    Grid.X = (e.X / zoom);
+			//    Grid.Y = (e.Y / zoom);
+
+			//    if ( ((e.X / zoom) - EditPoint.X != 0) || ((e.Y / zoom) - EditPoint.Y != 0) )
+			//    {
+			//        /* show the rectangle */
+			//        //DrawingArea.Invalidate();
+			//        //PaintOnDrawingArea(sender, e);
+			//        Graphics graphics = ((PictureBox)sender).CreateGraphics();
+			//        graphics.DrawRectangle(pen, (e.X / zoom) * zoom, (e.Y / zoom) * zoom, zoom, zoom);
+			//		  graphics.Dispose();
+			//    }
+			//}
 		}
 		private void DrawingArea_MouseUp(object sender, MouseEventArgs e)
 		{
@@ -386,6 +546,34 @@ namespace AGS.Plugin.FontEditor
 			CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = charinfo.UndoPossible;
 			CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = charinfo.RedoPossible;
 		}
+		private void DrawingArea_Paint(object sender, PaintEventArgs e)
+		{
+			Bitmap Selected;
+
+			if ( null != (Selected = (Bitmap)(((CCharInfo)(CharacterPictureList[Index].Tag)).UnscaledImage)) )
+			{
+				Bitmap scaledbitmap;
+				CFontUtils.ScaleBitmap(Selected, out scaledbitmap, ZoomDrawingArea.Value);
+
+				Graphics graphics = e.Graphics;
+				graphics.DrawImage(scaledbitmap, 0, 0);
+
+				if ( ShowGrid )
+				{
+					Int32 zoom = ZoomDrawingArea.Value;
+
+					for ( int xcnt = 0; xcnt < ((CCharInfo)(CharacterPictureList[Index].Tag)).Width; xcnt++ )
+					{
+						for ( int ycnt = 0; ycnt < ((CCharInfo)(CharacterPictureList[Index].Tag)).Height; ycnt++ )
+						{
+							graphics.DrawRectangle(GridPen, xcnt * zoom, ycnt * zoom, zoom, zoom);
+						}
+					}
+				}
+
+				//graphics.Dispose();
+			}
+		}
 
 		public void Save()
 		{
@@ -398,23 +586,36 @@ namespace AGS.Plugin.FontEditor
 			if ( !ClickedOnCharacter )
 			{
 				CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
-				CFontUtils.RecreateCharacter(character, (UInt16)numWidth.Value, (UInt16)numHeight.Value);
-				Bitmap bitmap = null;
-
-				CFontUtils.CreateBitmap(character, out bitmap);
-				character.UnscaledImage = bitmap;
-
-				Bitmap outbmp;
-				CFontUtils.ScaleBitmap(bitmap, out outbmp, Scalefactor);
-				CharacterPictureList[Index].Size = outbmp.Size;
-				CharacterPictureList[Index].Image = outbmp;
-
-				Bitmap drawingbitmap;
-				CFontUtils.ScaleBitmap(bitmap, out drawingbitmap, ZoomDrawingArea.Value);
-				DrawingArea.Size = drawingbitmap.Size;
-				DrawingArea.Image = drawingbitmap;
+				CreateAndShow(character, false);
 			}
 			CheckChange();
+		}
+
+		private void CreateAndShow(CCharInfo character, bool keepOrigWidth)
+		{
+			if ( keepOrigWidth )
+			{
+				CFontUtils.RecreateCharacter(character, character.Width, (UInt16)numHeight.Value);
+			}
+			else
+			{
+				CFontUtils.RecreateCharacter(character, (UInt16)numWidth.Value, (UInt16)numHeight.Value);
+			}
+
+			Bitmap bitmap = null;
+
+			CFontUtils.CreateBitmap(character, out bitmap);
+			character.UnscaledImage = bitmap;
+
+			Bitmap outbmp;
+			CFontUtils.ScaleBitmap(bitmap, out outbmp, Scalefactor);
+			CharacterPictureList[Index].Size = outbmp.Size;
+			CharacterPictureList[Index].Image = outbmp;
+
+			Bitmap drawingbitmap;
+			CFontUtils.ScaleBitmap(bitmap, out drawingbitmap, ZoomDrawingArea.Value);
+			DrawingArea.Size = drawingbitmap.Size;
+			DrawingArea.Image = drawingbitmap;
 		}
 		
 		private void numWidth_ValueChanged(object sender, EventArgs e)
@@ -442,6 +643,382 @@ namespace AGS.Plugin.FontEditor
 			}
 
 			AdjustSize();
+		}
+
+		private void BtnClear_Click(object sender, EventArgs e)
+		{
+			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
+
+			for ( int bytelinecounter = 0; bytelinecounter < character.ByteLines.Length; bytelinecounter++ )
+			{
+				character.ByteLines[bytelinecounter] = 0x00;
+			}
+
+			character.UndoRedoListTidyUp();
+			character.UndoRedoListAdd(character.ByteLines);
+
+			CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+			CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+
+			CreateAndShow(character, false);
+			CheckChange();
+		}
+		private void BtnFill_Click(object sender, EventArgs e)
+		{
+			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
+
+			for ( int bytelinecounter = 0; bytelinecounter < character.ByteLines.Length; bytelinecounter++)
+			{
+				character.ByteLines[bytelinecounter] = 0xFF;
+			}
+
+			character.UndoRedoListTidyUp();
+			character.UndoRedoListAdd(character.ByteLines);
+
+			CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+			CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+
+			CreateAndShow(character, false);
+			CheckChange();
+		}
+
+		private void BtnShiftUp_Click(object sender, EventArgs e)
+		{
+			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
+			Bitmap Selected;
+
+			if ( null != (Selected = (Bitmap)(character.UnscaledImage)) )
+			{
+				BitmapData bmpData = Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
+				IntPtr ptrbegin = bmpData.Scan0;
+				IntPtr ptrrest = bmpData.Scan0;
+				ptrrest = (IntPtr)((int)ptrrest + bmpData.Stride);
+				byte[] shiftarray = new byte[bmpData.Stride * Selected.Height];
+
+				System.Runtime.InteropServices.Marshal.Copy(ptrrest, shiftarray, 0, bmpData.Stride * (Selected.Height - 1));
+				System.Runtime.InteropServices.Marshal.Copy(ptrbegin, shiftarray, bmpData.Stride * (Selected.Height - 1), bmpData.Stride);
+
+				ptrbegin = bmpData.Scan0;
+				System.Runtime.InteropServices.Marshal.Copy(shiftarray, 0, ptrbegin, bmpData.Stride * Selected.Height);
+				Selected.UnlockBits(bmpData);
+
+				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[Index].Tag), Selected);
+				((CCharInfo)(CharacterPictureList[Index].Tag)).UnscaledImage = Selected;
+			}
+
+			character.UndoRedoListTidyUp();
+			character.UndoRedoListAdd(character.ByteLines);
+
+			CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+			CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+
+			CreateAndShow(character, false);
+			CheckChange();
+		}
+		private void BtnShiftDown_Click(object sender, EventArgs e)
+		{
+			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
+			Bitmap Selected;
+
+			if ( null != (Selected = (Bitmap)(character.UnscaledImage)) )
+			{
+				BitmapData bmpData = Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
+				IntPtr ptrbegin = bmpData.Scan0;
+				IntPtr ptrrest = bmpData.Scan0;
+				ptrrest = (IntPtr)((int)ptrrest + bmpData.Stride * (Selected.Height - 1));
+				byte[] shiftarray = new byte[bmpData.Stride * Selected.Height];
+
+				System.Runtime.InteropServices.Marshal.Copy(ptrbegin, shiftarray, bmpData.Stride, bmpData.Stride * (Selected.Height - 1));
+				System.Runtime.InteropServices.Marshal.Copy(ptrrest, shiftarray, 0, bmpData.Stride);
+
+				ptrbegin = bmpData.Scan0;
+				System.Runtime.InteropServices.Marshal.Copy(shiftarray, 0, ptrbegin, bmpData.Stride * Selected.Height);
+				Selected.UnlockBits(bmpData);
+
+				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[Index].Tag), Selected);
+				((CCharInfo)(CharacterPictureList[Index].Tag)).UnscaledImage = Selected;
+			}
+
+			character.UndoRedoListTidyUp();
+			character.UndoRedoListAdd(character.ByteLines);
+
+			CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+			CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+
+			CreateAndShow(character, false);
+			CheckChange();
+		}
+		private void BtnShiftLeft_Click(object sender, EventArgs e)
+		{
+			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
+			Bitmap Selected;
+
+			if ( null != (Selected = (Bitmap)(character.UnscaledImage)) )
+			{
+				BitmapData bmpData = Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
+				IntPtr ptrbegin = bmpData.Scan0;
+				IntPtr ptrwrite = bmpData.Scan0;
+				byte[] linearray = new byte[bmpData.Stride];
+				ptrbegin = bmpData.Scan0;
+				UInt32 line;
+				UInt32 overflow;
+
+				for ( int cnt=0; cnt < Selected.Height; cnt++ )
+				{
+					System.Runtime.InteropServices.Marshal.Copy(ptrbegin, linearray, 0, bmpData.Stride);
+					Array.Reverse(linearray);
+					line = BitConverter.ToUInt32(linearray, 0);
+
+					overflow = (line & 0x80000000) >> (Selected.Width-1);
+					line <<= 1;
+					line += overflow;
+
+					linearray = BitConverter.GetBytes(line);
+					Array.Reverse(linearray);
+					System.Runtime.InteropServices.Marshal.Copy(linearray, 0, ptrwrite, bmpData.Stride);
+
+					ptrbegin = (IntPtr)(((int)ptrbegin + bmpData.Stride));
+					ptrwrite = (IntPtr)(((int)ptrwrite + bmpData.Stride));
+				}
+
+				Selected.UnlockBits(bmpData);
+
+				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[Index].Tag), Selected);
+				((CCharInfo)(CharacterPictureList[Index].Tag)).UnscaledImage = Selected;
+			}
+
+			character.UndoRedoListTidyUp();
+			character.UndoRedoListAdd(character.ByteLines);
+
+			CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+			CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+
+			CreateAndShow(character, false);
+			CheckChange();
+		}
+		private void BtnShiftRight_Click(object sender, EventArgs e)
+		{
+			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
+			Bitmap Selected;
+
+			if ( null != (Selected = (Bitmap)(character.UnscaledImage)) )
+			{
+				BitmapData bmpData = Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
+				IntPtr ptrbegin = bmpData.Scan0;
+				IntPtr ptrwrite = bmpData.Scan0;
+				byte[] linearray = new byte[bmpData.Stride];
+				ptrbegin = bmpData.Scan0;
+				UInt32 line;
+				UInt32 underflow;
+
+				for ( int cnt=0; cnt < Selected.Height; cnt++ )
+				{
+					System.Runtime.InteropServices.Marshal.Copy(ptrbegin, linearray, 0, bmpData.Stride);
+					Array.Reverse(linearray);
+					line = BitConverter.ToUInt32(linearray, 0);
+
+					underflow = line << (Selected.Width - 1);
+					line >>= 1;
+					line += underflow;
+
+					linearray = BitConverter.GetBytes(line);
+					Array.Reverse(linearray);
+					System.Runtime.InteropServices.Marshal.Copy(linearray, 0, ptrwrite, bmpData.Stride);
+
+					ptrbegin = (IntPtr)(((int)ptrbegin + bmpData.Stride));
+					ptrwrite = (IntPtr)(((int)ptrwrite + bmpData.Stride));
+				}
+
+				Selected.UnlockBits(bmpData);
+
+				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[Index].Tag), Selected);
+				((CCharInfo)(CharacterPictureList[Index].Tag)).UnscaledImage = Selected;
+			}
+
+			character.UndoRedoListTidyUp();
+			character.UndoRedoListAdd(character.ByteLines);
+
+			CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+			CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+
+			CreateAndShow(character, false);
+			CheckChange();
+		}
+
+		private void BtnSetAllHeight_Click(object sender, EventArgs e)
+		{
+			foreach ( PictureBox item in CharacterPictureList )
+			{
+				if ( !ClickedOnCharacter )
+				{
+					CCharInfo character = ((CCharInfo)(item.Tag));
+					CreateAndShow(character, true);
+				}
+			}
+
+			CheckChange();
+		}
+
+		private void ChkGrid_CheckedChanged(object sender, EventArgs e)
+		{
+			ShowGrid = ChkGrid.Checked;
+			Character_Click(CharacterPictureList[Index], new MouseEventArgs(MouseButtons.Left, 1, 0, 0, 0));
+		}
+
+		private void BtnInvert_Click(object sender, EventArgs e)
+		{
+			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
+			Bitmap Selected;
+
+			if ( null != (Selected = (Bitmap)(character.UnscaledImage)) )
+			{
+				BitmapData	bmpData		= Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
+				IntPtr		ptrbegin	= bmpData.Scan0;
+				IntPtr		ptrwrite	= bmpData.Scan0;
+				byte[]		linearray	= new byte[bmpData.Stride];
+				UInt32		line;
+				UInt32		mask;
+
+				for ( int cnt = 0; cnt < Selected.Height; cnt++ )
+				{
+					System.Runtime.InteropServices.Marshal.Copy(ptrbegin, linearray, 0, bmpData.Stride);
+					Array.Reverse(linearray);
+					line = BitConverter.ToUInt32(linearray, 0);
+
+					//mask = 0xFFFFFFFF;
+					//mask >>= (31 - Selected.Width);
+					line = ~line;
+					//line &= ~mask;
+
+
+					linearray = BitConverter.GetBytes(line);
+					Array.Reverse(linearray);
+					System.Runtime.InteropServices.Marshal.Copy(linearray, 0, ptrwrite, bmpData.Stride);
+
+					ptrbegin = (IntPtr)(((int)ptrbegin + bmpData.Stride));
+					ptrwrite = (IntPtr)(((int)ptrwrite + bmpData.Stride));
+				}
+
+				Selected.UnlockBits(bmpData);
+
+				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[Index].Tag), Selected);
+				((CCharInfo)(CharacterPictureList[Index].Tag)).UnscaledImage = Selected;
+			}
+
+			character.UndoRedoListTidyUp();
+			character.UndoRedoListAdd(character.ByteLines);
+
+			CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+			CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+
+			CreateAndShow(character, false);
+			CheckChange();
+		}
+
+		private void PictSwap_Click(object sender, EventArgs e)
+		{
+			Color temp = PanelRightMouse.BackColor;
+			PanelRightMouse.BackColor = PanelLeftMouse.BackColor;
+			PanelLeftMouse.BackColor = temp;
+		}
+
+		private void BtnSwapHorizontally_Click(object sender, EventArgs e)
+		{
+			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
+			Bitmap Selected;
+
+			if ( null != (Selected = (Bitmap)(character.UnscaledImage)) )
+			{
+				BitmapData bmpData = Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
+				IntPtr ptrbegin = bmpData.Scan0;
+				byte[][] linearray = new byte[Selected.Height][];
+
+				for ( int cnt = 0; cnt < Selected.Height; cnt++ )
+				{
+					linearray[cnt] = new byte[bmpData.Stride];
+					System.Runtime.InteropServices.Marshal.Copy(ptrbegin, linearray[cnt], 0, bmpData.Stride);
+					ptrbegin = (IntPtr)(((int)ptrbegin + bmpData.Stride));
+				}
+
+				ptrbegin = bmpData.Scan0;
+
+				for ( int cnt2 = 0; cnt2 < Selected.Height; cnt2++ )
+				{
+					System.Runtime.InteropServices.Marshal.Copy(linearray[Selected.Height - 1 - cnt2], 0, ptrbegin, bmpData.Stride);
+
+					ptrbegin = (IntPtr)(((int)ptrbegin + bmpData.Stride));
+				}
+
+				Selected.UnlockBits(bmpData);
+
+				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[Index].Tag), Selected);
+				((CCharInfo)(CharacterPictureList[Index].Tag)).UnscaledImage = Selected;
+			}
+
+			character.UndoRedoListTidyUp();
+			character.UndoRedoListAdd(character.ByteLines);
+
+			CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+			CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+
+			CreateAndShow(character, false);
+			CheckChange();
+		}
+		private void BtnSwapVertically_Click(object sender, EventArgs e)
+		{
+			CCharInfo character = ((CCharInfo)(((PictureBox)CharacterPictureList[Index]).Tag));
+			Bitmap Selected;
+
+			if ( null != (Selected = (Bitmap)(character.UnscaledImage)) )
+			{
+				BitmapData bmpData = Selected.LockBits(new Rectangle(0, 0, Selected.Width, Selected.Height), ImageLockMode.ReadWrite, Selected.PixelFormat);
+				IntPtr ptrbegin = bmpData.Scan0;
+				IntPtr ptrwrite = bmpData.Scan0;
+				byte[] linearray = new byte[bmpData.Stride];
+				UInt32 line;
+
+				for ( int cnt = 0; cnt < Selected.Height; cnt++ )
+				{
+					System.Runtime.InteropServices.Marshal.Copy(ptrbegin, linearray, 0, bmpData.Stride);
+					Array.Reverse(linearray);
+					line = BitConverter.ToUInt32(linearray, 0);
+
+					UInt32 temp = 0;
+					UInt32 temp2 = 0;
+					UInt32 temp3 = 0;
+
+					for(int cnti=0;cnti<32;cnti++)
+					{
+						temp2 = line >> (32-(cnti+1));
+						temp3 = (UInt32)(1 << (cnti+1));
+
+						temp |= (temp2&1) << cnti;
+					}
+					
+					line = temp << (32-Selected.Width);
+
+					linearray = BitConverter.GetBytes(line);
+					Array.Reverse(linearray);
+					System.Runtime.InteropServices.Marshal.Copy(linearray, 0, ptrwrite, bmpData.Stride);
+
+					ptrbegin = (IntPtr)(((int)ptrbegin + bmpData.Stride));
+					ptrwrite = (IntPtr)(((int)ptrwrite + bmpData.Stride));
+				}
+
+				Selected.UnlockBits(bmpData);
+
+				CFontUtils.SaveByteLinesFromPicture((CCharInfo)(CharacterPictureList[Index].Tag), Selected);
+				((CCharInfo)(CharacterPictureList[Index].Tag)).UnscaledImage = Selected;
+			}
+
+			character.UndoRedoListTidyUp();
+			character.UndoRedoListAdd(character.ByteLines);
+
+			CharacterPictureList[Index].ContextMenu.MenuItems[0].Enabled = character.UndoPossible;
+			CharacterPictureList[Index].ContextMenu.MenuItems[1].Enabled = character.RedoPossible;
+
+			CreateAndShow(character, false);
+			CheckChange();
 		}
 	}
 }

@@ -65,6 +65,7 @@ namespace WFN_FontEditor
 				tp.Text = System.IO.Path.GetFileName(pane.Fontname);
 				tp.Tag = pane;
 				tp.Controls.Add(fep);
+				fep.Dock = DockStyle.Fill;
 				TabControl.Controls.Add(tp);
 				fep.Tag = tp;
 			}
