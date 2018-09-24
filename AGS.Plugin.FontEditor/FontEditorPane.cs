@@ -12,6 +12,7 @@ namespace AGS.Plugin.FontEditor
 {
 	public partial class FontEditorPane: EditorContentPanel
 	{
+		Settings XmlSettings = new Settings();
 		private List<PictureBox> CharacterPictureList = new List<PictureBox>();
 		private Int32 Index;
 		private bool bInEdit = false;
@@ -94,6 +95,7 @@ namespace AGS.Plugin.FontEditor
 
 		public FontEditorPane()
 		{
+			XmlSettings.Read();
 			InitializeComponent();
 			LblZoom.Text = "x" + ZoomDrawingArea.Value;
 
@@ -102,7 +104,9 @@ namespace AGS.Plugin.FontEditor
 		}
 		public FontEditorPane(string filepath, string filename, string fontname)
 		{
+			XmlSettings.Read();
 			InitializeComponent();
+
 			LblZoom.Text = "x" + ZoomDrawingArea.Value;
 
 			numWidth.Maximum = MaxWidth;
@@ -146,58 +150,98 @@ namespace AGS.Plugin.FontEditor
 					}
 				}
 
-				/* ++ Testcode for 256-character font */
-				//for ( int i = 0; i < 128; i++ )
-				//{
-				//    FontInfo.Character[i + 128] = new CCharInfo();
-				//    FontInfo.Character[i + 128].Height = FontInfo.Character[i].Height;
-				//    FontInfo.Character[i + 128].HeightOriginal = FontInfo.Character[i].HeightOriginal;
-				//    FontInfo.Character[i + 128].Width = FontInfo.Character[i].Width;
-				//    FontInfo.Character[i + 128].WidthOriginal = FontInfo.Character[i].WidthOriginal;
-				//    FontInfo.Character[i + 128].Index = FontInfo.Character[i].Index+128;
-
-				//    FontInfo.Character[i + 128].ByteLines = new byte[FontInfo.Character[i].ByteLines.Length];
-				//    FontInfo.Character[i + 128].ByteLinesOriginal = new byte[FontInfo.Character[i].ByteLinesOriginal.Length];
-
-				//    Array.Copy(FontInfo.Character[i].ByteLines, FontInfo.Character[i + 128].ByteLines, FontInfo.Character[i + 128].ByteLines.Length);
-				//    Array.Copy(FontInfo.Character[i].ByteLinesOriginal, FontInfo.Character[i + 128].ByteLinesOriginal, FontInfo.Character[i].ByteLinesOriginal.Length);
-				//}
-				/* -- Testcode for 256-character font */
-
 				foreach ( CCharInfo item in FontInfo.Character )
 				{
-					Bitmap bitmap = null; 
-					PictureBox pict = new PictureBox();
-					CharacterPictureList.Add(pict);
-
-					pict.Tag = item;
-					pict.Width = item.Width * Scalefactor;
-					pict.Height = item.Height * Scalefactor;
-					pict.Click += new EventHandler(Character_Click);
-					pict.ContextMenu = new ContextMenu();
-
-					ToolTip tt = new ToolTip();
-					tt.SetToolTip(pict, Chr(item.Index));
-
-					pict.ContextMenu.Tag = pict;
-					pict.ContextMenu.MenuItems.Add("Undo").Click += new EventHandler(MenuUndoClicked);
-					pict.ContextMenu.MenuItems.Add("Redo").Click += new EventHandler(MenuRedoClicked);
-					pict.ContextMenu.MenuItems.Add("Copy").Click += new EventHandler(MenuCopyClicked);
-					pict.ContextMenu.MenuItems.Add("Paste").Click += new EventHandler(MenuPasteClicked);
-					pict.ContextMenu.MenuItems[0].Enabled = false;
-					pict.ContextMenu.MenuItems[1].Enabled = false;
-
-					CFontUtils.CreateBitmap(item, out bitmap);
-
-					item.UnscaledImage = bitmap;
-					item.UndoRedoListAdd(item.ByteLines);
-
-					Bitmap outbmp;
-					CFontUtils.ScaleBitmap(bitmap, out outbmp, Scalefactor);
-					pict.Image = outbmp;
-
-					FlowCharacterPanel.Controls.Add(pict);
+					AddCharacterToList(item);
 				}
+
+				if ( FontInfo.Character.Length == 256 )
+				{
+					BtnExtend256.Enabled = false;
+				}
+			}
+
+			FlowCharacterPanel.BackColor = XmlSettings.Color;
+			ChkGrid.Checked = XmlSettings.Grid;
+			ShowCharacterCount();
+		}
+
+		private void ShowCharacterCount()
+		{
+
+			if ( FontInfo.Character.Length == 128 )
+			{
+				GroupBox.Text = "Selected font settings (Font File 128 chars)";
+			}
+			else if ( FontInfo.Character.Length == 256 )
+			{
+				GroupBox.Text = "Selected font settings (Font File 256 chars)";
+			}
+			else
+			{
+				GroupBox.Text = "Selected font settings";
+			}
+		}
+
+		private void AddCharacterToList(CCharInfo item)
+		{
+			Bitmap bitmap = null;
+			PictureBox pict = new PictureBox();
+			CharacterPictureList.Add(pict);
+
+			pict.Tag = item;
+			pict.Width = item.Width * Scalefactor;
+			pict.Height = item.Height * Scalefactor;
+			pict.Click += new EventHandler(Character_Click);
+			pict.ContextMenu = new ContextMenu();
+
+			ToolTip tt = new ToolTip();
+			tt.SetToolTip(pict, Chr(item.Index));
+
+			pict.ContextMenu.Tag = pict;
+			pict.ContextMenu.MenuItems.Add("Undo").Click += new EventHandler(MenuUndoClicked);
+			pict.ContextMenu.MenuItems.Add("Redo").Click += new EventHandler(MenuRedoClicked);
+			pict.ContextMenu.MenuItems.Add("Copy").Click += new EventHandler(MenuCopyClicked);
+			pict.ContextMenu.MenuItems.Add("Paste").Click += new EventHandler(MenuPasteClicked);
+			pict.ContextMenu.MenuItems[0].Enabled = false;
+			pict.ContextMenu.MenuItems[1].Enabled = false;
+
+			CFontUtils.CreateBitmap(item, out bitmap);
+
+			item.UnscaledImage = bitmap;
+			item.UndoRedoListAdd(item.ByteLines);
+
+			Bitmap outbmp;
+			CFontUtils.ScaleBitmap(bitmap, out outbmp, Scalefactor);
+			pict.Image = outbmp;
+
+			FlowCharacterPanel.Controls.Add(pict);
+		}
+
+		private void BtnExtend256_Click(object sender, EventArgs e)
+		{
+			int len = FontInfo.Character.Length;
+			if ( len <= 128 )
+			{
+				Array.Resize(ref FontInfo.Character, 256);
+
+				for ( int counter = 0; counter < (256 - len); counter++ )
+				{
+					FontInfo.Character[counter + len] = new CCharInfo();
+					FontInfo.Character[counter + len].Height = 4;
+					FontInfo.Character[counter + len].HeightOriginal = 4;
+					FontInfo.Character[counter + len].Width = 4;
+					FontInfo.Character[counter + len].WidthOriginal = 4;
+					FontInfo.Character[counter + len].Index = counter + len;
+
+					FontInfo.Character[counter + len].ByteLines = new byte[2];
+					FontInfo.Character[counter + len].ByteLinesOriginal = new byte[2];
+
+					AddCharacterToList(FontInfo.Character[counter+len]);
+				}
+
+				BtnExtend256.Enabled = false;
+				ShowCharacterCount();
 			}
 		}
 
@@ -741,6 +785,9 @@ namespace AGS.Plugin.FontEditor
 			CharacterPictureList[character.Index].Size = outbmp.Size;
 			CharacterPictureList[character.Index].Image = outbmp;
 
+			ToolTip tt = new ToolTip();
+			tt.SetToolTip(CharacterPictureList[character.Index], Chr(character.Index));
+
 			Bitmap drawingbitmap;
 			CFontUtils.ScaleBitmap(bitmap, out drawingbitmap, ZoomDrawingArea.Value);
 			DrawingArea.Size = drawingbitmap.Size;
@@ -992,6 +1039,8 @@ namespace AGS.Plugin.FontEditor
 		{
 			ShowGrid = ChkGrid.Checked;
 			Character_Click(CharacterPictureList[Index], new MouseEventArgs(MouseButtons.Left, 1, 0, 0, 0));
+			XmlSettings.Grid = ShowGrid;
+			XmlSettings.Write();
 		}
 
 		private void BtnInvert_Click(object sender, EventArgs e)
@@ -1161,6 +1210,92 @@ namespace AGS.Plugin.FontEditor
 			{
 				OutlineCharacter(counter);
 			}
+		}
+
+		private void FlowCharacterPanel_Click(object sender, EventArgs e)
+		{
+			MouseEventArgs events = (MouseEventArgs)e;
+
+			switch ( events.Button )
+			{
+			case MouseButtons.Right:
+				{
+					ColorDialog cd = new ColorDialog();
+
+					cd.Color = FlowCharacterPanel.BackColor;
+
+					if ( cd.ShowDialog() == DialogResult.OK )
+					{
+						FlowCharacterPanel.BackColor = cd.Color;
+					}
+
+					XmlSettings.Color = cd.Color;
+					XmlSettings.Write();
+				}
+				break;
+			default:
+				{
+				}
+				break;
+			};
+		}
+
+		private Image RenderTextLine(string text)
+		{
+			Int32 xpos = 0;
+			Int32 widthpreliminary = 0;
+			Int32 heightpreliminary = 0;
+			Image bmp;
+
+			try
+			{
+				foreach ( char c in text )
+				{
+					widthpreliminary += FontInfo.Character[c].Width;
+					heightpreliminary = Math.Max(heightpreliminary, FontInfo.Character[c].Height);
+				}
+
+				bmp = new Bitmap(widthpreliminary + 4, heightpreliminary + 4);
+				Graphics g = Graphics.FromImage(bmp);
+
+				g.FillRectangle(new SolidBrush(Color.Gray), 0, 0, bmp.Width, bmp.Height);
+
+				foreach ( char c in text )
+				{
+					g.DrawImageUnscaled(FontInfo.Character[c].UnscaledImage, xpos + 2, 2);
+					xpos += FontInfo.Character[c].Width;
+				}
+
+				g.Dispose();
+			}
+			catch
+			{
+				bmp = new Bitmap(600, 20);
+				Graphics g = Graphics.FromImage(bmp);
+				g.DrawString("No rendering possible. Not enough characters in the font, or another problem!", new System.Drawing.Font("Arial", 12), new SolidBrush(Color.Black), 2, 2);
+				g.Dispose();
+			}
+
+			return bmp;
+		}
+
+		private void BtnRenderText_Click(object sender, EventArgs e)
+		{
+			PictRenderText.Image = RenderTextLine(XmlSettings.CustomText);
+		}
+
+		private void BtnSetText_Click(object sender, EventArgs e)
+		{
+			string newValue = "";
+			
+			Settings.InputBox("Set new Text you wish to render.", XmlSettings.CustomText, ref newValue);
+
+			if ( newValue != null && newValue != "" )
+			{
+				XmlSettings.CustomText = newValue;
+			}
+
+			XmlSettings.Write();
 		}
 	}
 }

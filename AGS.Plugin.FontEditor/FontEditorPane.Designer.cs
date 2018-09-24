@@ -30,6 +30,7 @@
 		{
 			this.FlowCharacterPanel = new System.Windows.Forms.FlowLayoutPanel();
 			this.GroupBox = new System.Windows.Forms.GroupBox();
+			this.BtnExtend256 = new System.Windows.Forms.Button();
 			this.ZoomDrawingArea = new System.Windows.Forms.TrackBar();
 			this.LblZoom = new System.Windows.Forms.Label();
 			this.PanelSize = new System.Windows.Forms.Panel();
@@ -56,6 +57,9 @@
 			this.BtnSwapVertically = new System.Windows.Forms.Button();
 			this.BtnOutline = new System.Windows.Forms.Button();
 			this.BtnOutlineFont = new System.Windows.Forms.Button();
+			this.BtnRenderText = new System.Windows.Forms.Button();
+			this.PictRenderText = new System.Windows.Forms.PictureBox();
+			this.BtnSetText = new System.Windows.Forms.Button();
 			this.GroupBox.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.ZoomDrawingArea)).BeginInit();
 			this.PanelSize.SuspendLayout();
@@ -64,6 +68,7 @@
 			this.PanelMouseColor.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.PictSwap)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.DrawingArea)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.PictRenderText)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// FlowCharacterPanel
@@ -73,22 +78,34 @@
 						| System.Windows.Forms.AnchorStyles.Right)));
 			this.FlowCharacterPanel.AutoScroll = true;
 			this.FlowCharacterPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(16)))), ((int)(((byte)(16)))), ((int)(((byte)(16)))));
-			this.FlowCharacterPanel.Location = new System.Drawing.Point(6, 19);
+			this.FlowCharacterPanel.Location = new System.Drawing.Point(6, 28);
 			this.FlowCharacterPanel.Name = "FlowCharacterPanel";
-			this.FlowCharacterPanel.Size = new System.Drawing.Size(307, 443);
+			this.FlowCharacterPanel.Size = new System.Drawing.Size(307, 433);
 			this.FlowCharacterPanel.TabIndex = 4;
+			this.FlowCharacterPanel.Click += new System.EventHandler(this.FlowCharacterPanel_Click);
 			// 
 			// GroupBox
 			// 
 			this.GroupBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
 						| System.Windows.Forms.AnchorStyles.Left)));
 			this.GroupBox.Controls.Add(this.FlowCharacterPanel);
+			this.GroupBox.Controls.Add(this.BtnExtend256);
 			this.GroupBox.Location = new System.Drawing.Point(6, 6);
 			this.GroupBox.Name = "GroupBox";
-			this.GroupBox.Size = new System.Drawing.Size(320, 468);
+			this.GroupBox.Size = new System.Drawing.Size(320, 467);
 			this.GroupBox.TabIndex = 5;
 			this.GroupBox.TabStop = false;
 			this.GroupBox.Text = "Selected font settings";
+			// 
+			// BtnExtend256
+			// 
+			this.BtnExtend256.Location = new System.Drawing.Point(227, 0);
+			this.BtnExtend256.Name = "BtnExtend256";
+			this.BtnExtend256.Size = new System.Drawing.Size(86, 23);
+			this.BtnExtend256.TabIndex = 19;
+			this.BtnExtend256.Text = "Extend To 256 characters";
+			this.BtnExtend256.UseVisualStyleBackColor = true;
+			this.BtnExtend256.Click += new System.EventHandler(this.BtnExtend256_Click);
 			// 
 			// ZoomDrawingArea
 			// 
@@ -356,10 +373,45 @@
 			this.BtnOutlineFont.UseVisualStyleBackColor = true;
 			this.BtnOutlineFont.Click += new System.EventHandler(this.BtnOutlineFont_Click);
 			// 
+			// BtnRenderText
+			// 
+			this.BtnRenderText.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+			this.BtnRenderText.Location = new System.Drawing.Point(79, 479);
+			this.BtnRenderText.Name = "BtnRenderText";
+			this.BtnRenderText.Size = new System.Drawing.Size(75, 23);
+			this.BtnRenderText.TabIndex = 20;
+			this.BtnRenderText.Text = "Render Text";
+			this.BtnRenderText.UseVisualStyleBackColor = true;
+			this.BtnRenderText.Click += new System.EventHandler(this.BtnRenderText_Click);
+			// 
+			// PictRenderText
+			// 
+			this.PictRenderText.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
+						| System.Windows.Forms.AnchorStyles.Right)));
+			this.PictRenderText.Location = new System.Drawing.Point(160, 479);
+			this.PictRenderText.Name = "PictRenderText";
+			this.PictRenderText.Size = new System.Drawing.Size(541, 28);
+			this.PictRenderText.TabIndex = 21;
+			this.PictRenderText.TabStop = false;
+			// 
+			// BtnSetText
+			// 
+			this.BtnSetText.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+			this.BtnSetText.Location = new System.Drawing.Point(12, 479);
+			this.BtnSetText.Name = "BtnSetText";
+			this.BtnSetText.Size = new System.Drawing.Size(61, 23);
+			this.BtnSetText.TabIndex = 20;
+			this.BtnSetText.Text = "Set Text";
+			this.BtnSetText.UseVisualStyleBackColor = true;
+			this.BtnSetText.Click += new System.EventHandler(this.BtnSetText_Click);
+			// 
 			// FontEditorPane
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			this.Controls.Add(this.PictRenderText);
+			this.Controls.Add(this.BtnSetText);
+			this.Controls.Add(this.BtnRenderText);
 			this.Controls.Add(this.BtnOutlineFont);
 			this.Controls.Add(this.BtnOutline);
 			this.Controls.Add(this.BtnSwapVertically);
@@ -379,7 +431,7 @@
 			this.Controls.Add(this.DrawingArea);
 			this.Controls.Add(this.GroupBox);
 			this.Name = "FontEditorPane";
-			this.Size = new System.Drawing.Size(721, 488);
+			this.Size = new System.Drawing.Size(721, 510);
 			this.GroupBox.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.ZoomDrawingArea)).EndInit();
 			this.PanelSize.ResumeLayout(false);
@@ -390,6 +442,7 @@
 			this.PanelMouseColor.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)(this.PictSwap)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.DrawingArea)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.PictRenderText)).EndInit();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -425,5 +478,9 @@
 		private System.Windows.Forms.Button BtnSwapVertically;
 		private System.Windows.Forms.Button BtnOutline;
 		private System.Windows.Forms.Button BtnOutlineFont;
+		private System.Windows.Forms.Button BtnExtend256;
+		private System.Windows.Forms.Button BtnRenderText;
+		private System.Windows.Forms.PictureBox PictRenderText;
+		private System.Windows.Forms.Button BtnSetText;
 	}
 }
