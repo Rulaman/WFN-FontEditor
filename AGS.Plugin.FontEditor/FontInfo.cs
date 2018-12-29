@@ -371,8 +371,11 @@ namespace AGS.Plugin.FontEditor
 				{
 					for ( int heightcounter = 0; heightcounter < bmp.Height; heightcounter++ )
 					{
-						System.Runtime.InteropServices.Marshal.Copy(character.ByteLines, startPos * heightcounter, ptr, bytesPerLine);
-						ptr = (IntPtr)((int)ptr + bmpData.Stride);
+                        if ((startPos * heightcounter) + bytesPerLine <= character.ByteLines.Length)
+                        {
+                            System.Runtime.InteropServices.Marshal.Copy(character.ByteLines, startPos * heightcounter, ptr, bytesPerLine);
+                            ptr = (IntPtr)((int)ptr + bmpData.Stride);
+                        }
 					}
 				}
 

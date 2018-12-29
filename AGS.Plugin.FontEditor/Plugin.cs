@@ -104,12 +104,14 @@ namespace AGS.Plugin.FontEditor
 		{
 			//LocalEditor.GUIController.RemovePaneIfExists(Pane);
 
+			LocalEditor.GUIController.ProjectTree.RemoveAllChildNodes(this, CONTROL_ID_ROOT_NODE);
+			LocalEditor.GUIController.ProjectTree.StartFromNode(this, CONTROL_ID_ROOT_NODE);
+			FontPaneList.Clear();
+			PaneDictionary.Clear();
+
 			if ( LocalEditor.CurrentGame.Fonts.Count > 0 )
 			{
 				int fontcounter = 0;
-
-				LocalEditor.GUIController.ProjectTree.RemoveAllChildNodes(this, CONTROL_ID_ROOT_NODE);
-				LocalEditor.GUIController.ProjectTree.StartFromNode(this, CONTROL_ID_ROOT_NODE);
 
 				foreach ( AGS.Types.Font font in LocalEditor.CurrentGame.Fonts )
 				{

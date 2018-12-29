@@ -1321,7 +1321,24 @@ namespace AGS.Plugin.FontEditor
 							/* set the pixel upper and lower */
 							if (((cnt - 1) >= 0)) { bitarraynew[innercnt, cnt - 1] = bitarray[innercnt, cnt - 1] == true ? false : true; }
 							if (((cnt + 1) < bmpData.Height)) { bitarraynew[innercnt, cnt + 1] = bitarray[innercnt, cnt + 1] == true ? false : true; }
-						}
+
+
+							// only for testing double outline
+
+                            ///* set four pixel in the corner, if they don't set */
+                            //if (((innercnt - 2) >= 0) && ((cnt - 2) >= 0)) { bitarraynew[innercnt - 1, cnt - 2] = bitarray[innercnt - 2, cnt - 2] == true ? false : true; }
+                            //if (((innercnt - 2) >= 0) && ((cnt + 2) < bmpData.Height)) { bitarraynew[innercnt - 2, cnt + 2] = bitarray[innercnt - 2, cnt + 2] == true ? false : true; }
+                            //if (((innercnt + 2) < (bmpData.Stride * 8)) && ((cnt - 2) >= 0)) { bitarraynew[innercnt + 2, cnt - 2] = bitarray[innercnt + 2, cnt - 2] == true ? false : true; }
+                            //if (((innercnt + 2) < (bmpData.Stride * 8)) && ((cnt + 2) < bmpData.Height)) { bitarraynew[innercnt + 2, cnt + 2] = bitarray[innercnt + 2, cnt + 1] == true ? false : true; }
+
+                            ///* set the pixel left and right */
+                            //if (((innercnt - 2) >= 0)) { bitarraynew[innercnt - 2, cnt] = bitarray[innercnt - 2, cnt] == true ? false : true; }
+                            //if (((innercnt + 2) < (bmpData.Stride * 8))) { bitarraynew[innercnt + 2, cnt] = bitarray[innercnt + 2, cnt] == true ? false : true; }
+
+                            ///* set the pixel upper and lower */
+                            //if (((cnt - 2) >= 0)) { bitarraynew[innercnt, cnt - 2] = bitarray[innercnt, cnt - 2] == true ? false : true; }
+                            //if (((cnt + 2) < bmpData.Height)) { bitarraynew[innercnt, cnt + 2] = bitarray[innercnt, cnt + 2] == true ? false : true; }
+                        }
 					}
 				}
 

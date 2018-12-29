@@ -100,7 +100,6 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
+    <PostBuildEvent>rem xcopy "$(TargetPath)" "C:\temp\Adventure Game Studio 3.4.1\$(TargetFileName)" /Y /S</PostBuildEvent>
   </PropertyGroup>
 </Project>
