@@ -3,3 +3,5 @@ AGS.Plugin.FontEditor/obj/
 WFN-FontEditor/bin/
 WFN-FontEditor/obj/
 .vs/
+
+external/AGS.Types.dll
