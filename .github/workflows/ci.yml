@@ -1,0 +1,57 @@
+name: CI 
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+
+  build:
+
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+
+    runs-on: windows-2019  # only one with .NET Framework
+
+    env:
+      Solution_Name: WFN-FontEditor.sln
+      AGS_Version: 3.5.1.16
+      
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
+    - name: Setup MSBuild.exe
+      uses: microsoft/setup-msbuild@v1.0.2
+
+    - name: Setup AGS
+      run: choco install -y ags --version $env:AGS_Version
+
+    - name: Copy AGS Types
+      run: cp "C:\Program Files (x86)\Adventure Game Studio 3.5.1\AGS.Types.dll" external
+
+    - name: Restore the application
+      run: msbuild $env:Solution_Name /t:Restore /p:Configuration=$env:Configuration
+      env:
+        Configuration: ${{ matrix.configuration }}
+
+    - name: Build
+      run: msbuild $env:Solution_Name /p:Configuration=$env:Configuration /p:Platform="Any CPU" /maxcpucount /nologo      
+      env:
+        Configuration: ${{ matrix.configuration }}
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: Upload Files
+        path: |
+          WFN-FontEditor/bin/*/WFN-FontEditor.exe
+          WFN-FontEditor/bin/*/WFN-FontEditor.exe.config
+          WFN-FontEditor/bin/*/AGS.Plugin.FontEditor.dll
+          AGS.Plugin.FontEditor/bin/*/AGS.Plugin.FontEditor.dll
