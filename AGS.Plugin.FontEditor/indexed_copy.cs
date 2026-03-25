@@ -43,22 +43,35 @@ namespace Indexed
 			bmi.biSizeImage = (uint)(((w + 7) & 0xFFFFFFF8) * h / 8);
 			bmi.biXPelsPerMeter = 1000000; // not really important
 			bmi.biYPelsPerMeter = 1000000; // not really important
-			// Now for the colour table.
-			uint ncols = (uint)1 << bpp; // 2 colours for 1bpp; 256 colours for 8bpp
-			bmi.biClrUsed = ncols;
-			bmi.biClrImportant = ncols;
-			bmi.cols = new uint[256]; // The structure always has fixed size 256, even if we end up using fewer colours
-			if ( bpp == 1 ) { bmi.cols[0] = MAKERGB(0, 0, 0); bmi.cols[1] = MAKERGB(255, 255, 255); }
-			else { for ( int i=0; i < ncols; i++ ) bmi.cols[i] = MAKERGB(i, i, i); }
-			// For 8bpp we've created an palette with just greyscale colours.
-			// You can set up any palette you want here. Here are some possibilities:
-			// greyscale: for (int i=0; i<256; i++) bmi.cols[i]=MAKERGB(i,i,i);
-			// rainbow: bmi.biClrUsed=216; bmi.biClrImportant=216; int[] colv=new int[6]{0,51,102,153,204,255};
-			//          for (int i=0; i<216; i++) bmi.cols[i]=MAKERGB(colv[i/36],colv[(i/6)%6],colv[i%6]);
-			// optimal: a difficult topic: http://en.wikipedia.org/wiki/Color_quantization
-			// 
-			// Now create the indexed bitmap "hbm0"
-			IntPtr bits0; // not used for our purposes. It returns a pointer to the raw bits that make up the bitmap.
+
+            // Now for the colour table.
+            uint ncols = (uint)(1 << bpp); // 2 for 1bpp, 256 for 8bpp
+            bmi.biClrUsed = ncols;
+            bmi.biClrImportant = ncols;
+
+            // IMPORTANT: array size MUST match SizeConst (256)
+            bmi.cols = new uint[256];
+
+            if (bpp == 1)
+            {
+                bmi.cols[0] = MAKERGB(0, 0, 0);
+                bmi.cols[1] = MAKERGB(255, 255, 255);
+            }
+            else // 8bpp
+            {
+                for (int i = 0; i < 256; i++)
+                    bmi.cols[i] = MAKERGB(i, i, i);
+            }
+
+            // For 8bpp we've created an palette with just greyscale colours.
+            // You can set up any palette you want here. Here are some possibilities:
+            // greyscale: for (int i=0; i<65535; i++) bmi.cols[i]=MAKERGB(i,i,i);
+            // rainbow: bmi.biClrUsed=216; bmi.biClrImportant=216; int[] colv=new int[6]{0,51,102,153,204,255};
+            //          for (int i=0; i<216; i++) bmi.cols[i]=MAKERGB(colv[i/36],colv[(i/6)%6],colv[i%6]);
+            // optimal: a difficult topic: http://en.wikipedia.org/wiki/Color_quantization
+            // 
+            // Now create the indexed bitmap "hbm0"
+            IntPtr bits0; // not used for our purposes. It returns a pointer to the raw bits that make up the bitmap.
 			IntPtr hbm0 = CreateDIBSection(IntPtr.Zero, ref bmi, DIB_RGB_COLORS, out bits0, IntPtr.Zero, 0);
 			//
 			// Step (3): use GDI's BitBlt function to copy from original hbitmap into monocrhome bitmap

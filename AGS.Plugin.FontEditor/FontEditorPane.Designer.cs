@@ -30,8 +30,12 @@
 		{
 			this.FlowCharacterPanel = new System.Windows.Forms.FlowLayoutPanel();
 			this.GroupBox = new System.Windows.Forms.GroupBox();
-			this.BtnExtend256 = new System.Windows.Forms.Button();
-			this.ZoomDrawingArea = new System.Windows.Forms.TrackBar();
+            this.TxtGlyphRange = new System.Windows.Forms.TextBox();
+            this.BtnPagePrev = new System.Windows.Forms.Button();
+            this.BtnPageNext = new System.Windows.Forms.Button();
+            this.TxtPageNumber = new System.Windows.Forms.TextBox();
+            this.LblPageTotal = new System.Windows.Forms.Label();
+            this.ZoomDrawingArea = new System.Windows.Forms.TrackBar();
 			this.LblZoom = new System.Windows.Forms.Label();
 			this.PanelSize = new System.Windows.Forms.Panel();
 			this.LblWidth = new System.Windows.Forms.Label();
@@ -66,8 +70,10 @@
 			this.ChkGridFix = new System.Windows.Forms.CheckBox();
 			this.BtnAllHeight = new System.Windows.Forms.Button();
 			this.BtnAllWidth = new System.Windows.Forms.Button();
-			this.TxtCharacter = new System.Windows.Forms.TextBox();
-			this.GrpAllCharacters = new System.Windows.Forms.GroupBox();
+            this.BtnAllBlankClear = new System.Windows.Forms.Button();
+            this.TxtCharacter = new System.Windows.Forms.TextBox();
+            this.TxtGlyph = new System.Windows.Forms.TextBox();
+            this.GrpAllCharacters = new System.Windows.Forms.GroupBox();
 			this.GrpOneCharacter = new System.Windows.Forms.GroupBox();
 			this.ChkOneAllCharacters = new System.Windows.Forms.CheckBox();
 			this.GroupBox.SuspendLayout();
@@ -101,27 +107,28 @@
 			this.GroupBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
 			this.GroupBox.Controls.Add(this.FlowCharacterPanel);
-			this.GroupBox.Controls.Add(this.BtnExtend256);
-			this.GroupBox.Location = new System.Drawing.Point(6, 6);
+            this.GroupBox.Controls.Add(this.TxtGlyphRange);
+            this.GroupBox.Location = new System.Drawing.Point(6, 6);
 			this.GroupBox.Name = "GroupBox";
 			this.GroupBox.Size = new System.Drawing.Size(320, 467);
 			this.GroupBox.TabIndex = 5;
 			this.GroupBox.TabStop = false;
 			this.GroupBox.Text = "Selected font settings";
-			// 
-			// BtnExtend256
-			// 
-			this.BtnExtend256.Location = new System.Drawing.Point(227, 0);
-			this.BtnExtend256.Name = "BtnExtend256";
-			this.BtnExtend256.Size = new System.Drawing.Size(86, 23);
-			this.BtnExtend256.TabIndex = 19;
-			this.BtnExtend256.Text = "Extend To 256 characters";
-			this.BtnExtend256.UseVisualStyleBackColor = true;
-			this.BtnExtend256.Click += new System.EventHandler(this.BtnExtend256_Click);
-			// 
-			// ZoomDrawingArea
-			// 
-			this.ZoomDrawingArea.LargeChange = 1;
+            // 
+            // TxtGlyphRange
+            // 
+            this.TxtGlyphRange.Location = new System.Drawing.Point(264, 0);
+            this.TxtGlyphRange.Name = "TxtGlyphRange";
+            this.TxtGlyphRange.Size = new System.Drawing.Size(50, 20);
+            this.TxtGlyphRange.TabIndex = 19;
+            this.TxtGlyphRange.MaxLength = 5;
+            this.TxtGlyphRange.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtGlyphRange_KeyPress);
+            this.TxtGlyphRange.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtGlyphRange_KeyPress_Filter);
+            this.TxtGlyphRange.Leave += new System.EventHandler(this.TxtGlyphRange_Leave);
+            // 
+            // ZoomDrawingArea
+            // 
+            this.ZoomDrawingArea.LargeChange = 1;
 			this.ZoomDrawingArea.Location = new System.Drawing.Point(335, 138);
 			this.ZoomDrawingArea.Maximum = 40;
 			this.ZoomDrawingArea.Minimum = 2;
@@ -388,19 +395,63 @@
 			// BtnRenderText
 			// 
 			this.BtnRenderText.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.BtnRenderText.Location = new System.Drawing.Point(79, 479);
+			this.BtnRenderText.Location = new System.Drawing.Point(245, 479);
 			this.BtnRenderText.Name = "BtnRenderText";
 			this.BtnRenderText.Size = new System.Drawing.Size(75, 23);
 			this.BtnRenderText.TabIndex = 20;
 			this.BtnRenderText.Text = "Render Text";
 			this.BtnRenderText.UseVisualStyleBackColor = true;
 			this.BtnRenderText.Click += new System.EventHandler(this.BtnRenderText_Click);
-			// 
-			// PictRenderText
-			// 
-			this.PictRenderText.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            // 
+            // BtnPagePrev
+            // 
+            this.BtnPagePrev.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.BtnPagePrev.Location = new System.Drawing.Point(73, 479);
+            this.BtnPagePrev.Name = "BtnPagePrev";
+            this.BtnPagePrev.Size = new System.Drawing.Size(55, 23);
+            this.BtnPagePrev.TabIndex = 21;
+            this.BtnPagePrev.Text = "<< Page";
+            this.BtnPagePrev.UseVisualStyleBackColor = true;
+            this.BtnPagePrev.Click += new System.EventHandler(this.BtnPagePrev_Click);
+            // 
+            // BtnPageNext
+            // 
+            this.BtnPageNext.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.BtnPageNext.Location = new System.Drawing.Point(190, 479);
+            this.BtnPageNext.Name = "BtnPageNext";
+            this.BtnPageNext.Size = new System.Drawing.Size(55, 23);
+            this.BtnPageNext.TabIndex = 22;
+            this.BtnPageNext.Text = "Page >>";
+            this.BtnPageNext.UseVisualStyleBackColor = true;
+            this.BtnPageNext.Click += new System.EventHandler(this.BtnPageNext_Click);
+            // 
+            // TxtPageNumber
+            // 
+            this.TxtPageNumber.Anchor = ((System.Windows.Forms.AnchorStyles)
+                ((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.TxtPageNumber.Location = new System.Drawing.Point(130, 480);
+            this.TxtPageNumber.Name = "TxtPageNumber";
+            this.TxtPageNumber.Size = new System.Drawing.Size(30, 20);
+            this.TxtPageNumber.TabIndex = 23;
+            this.TxtPageNumber.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.TxtPageNumber.Text = "1";
+            this.TxtPageNumber.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TxtPageNumber_KeyDown);
+            // 
+            // LblPageTotal
+            // 
+            this.LblPageTotal.Anchor = ((System.Windows.Forms.AnchorStyles)
+                ((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.LblPageTotal.Location = new System.Drawing.Point(160, 483);
+            this.LblPageTotal.Name = "LblPageTotal";
+            this.LblPageTotal.Size = new System.Drawing.Size(40, 15);
+            this.LblPageTotal.TabIndex = 24;
+            this.LblPageTotal.Text = "/ 1";
+            // 
+            // PictRenderText
+            // 
+            this.PictRenderText.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.PictRenderText.Location = new System.Drawing.Point(160, 479);
+			this.PictRenderText.Location = new System.Drawing.Point(330, 479);
 			this.PictRenderText.Name = "PictRenderText";
 			this.PictRenderText.Size = new System.Drawing.Size(833, 28);
 			this.PictRenderText.TabIndex = 21;
@@ -477,26 +528,48 @@
 			this.BtnAllWidth.Text = "All width to current";
 			this.BtnAllWidth.UseVisualStyleBackColor = true;
 			this.BtnAllWidth.Click += new System.EventHandler(this.BtnAllWidth_Click);
-			// 
-			// TxtCharacter
-			// 
-			this.TxtCharacter.Location = new System.Drawing.Point(460, 77);
+            // 
+            // BtnAllBlankClear
+            // 
+            this.BtnAllBlankClear.Location = new System.Drawing.Point(6, 105);
+            this.BtnAllBlankClear.Name = "BtnAllBlankClear";
+            this.BtnAllBlankClear.Size = new System.Drawing.Size(156, 23);
+            this.BtnAllBlankClear.TabIndex = 23;
+            this.BtnAllBlankClear.Text = "Make all blanks placeholdes";
+            this.BtnAllBlankClear.UseVisualStyleBackColor = true;
+            this.BtnAllBlankClear.Click += new System.EventHandler(this.BtnAllBlankClear_Click);
+            // 
+            // TxtGlyph
+            // 
+            this.TxtGlyph.Location = new System.Drawing.Point(460, 54);
+            this.TxtGlyph.Name = "TxtGlyph";
+            this.TxtGlyph.Size = new System.Drawing.Size(53, 20);
+            this.TxtGlyph.TabIndex = 24;
+            this.TxtGlyph.MaxLength = 1;
+            this.TxtGlyph.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtGlyph_KeyPress);
+            // 
+            // TxtCharacter
+            // 
+            this.TxtCharacter.Location = new System.Drawing.Point(460, 77);
 			this.TxtCharacter.Name = "TxtCharacter";
 			this.TxtCharacter.Size = new System.Drawing.Size(53, 20);
 			this.TxtCharacter.TabIndex = 24;
 			this.TxtCharacter.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtCharacter_KeyPress);
-			// 
-			// GrpAllCharacters
-			// 
-			this.GrpAllCharacters.Controls.Add(this.BtnOutlineFont);
+            this.TxtCharacter.Leave += new System.EventHandler(this.TxtCharacter_Leave);
+            this.TxtGlyph.Leave += new System.EventHandler(this.TxtGlyph_Leave);
+            // 
+            // GrpAllCharacters
+            // 
+            this.GrpAllCharacters.Controls.Add(this.BtnOutlineFont);
 			this.GrpAllCharacters.Controls.Add(this.BtnAllHeight);
 			this.GrpAllCharacters.Controls.Add(this.BtnAllWidth);
-			this.GrpAllCharacters.Location = new System.Drawing.Point(838, 3);
+            this.GrpAllCharacters.Controls.Add(this.BtnAllBlankClear);
+            this.GrpAllCharacters.Location = new System.Drawing.Point(838, 3);
 			this.GrpAllCharacters.Name = "GrpAllCharacters";
 			this.GrpAllCharacters.Size = new System.Drawing.Size(169, 137);
 			this.GrpAllCharacters.TabIndex = 25;
 			this.GrpAllCharacters.TabStop = false;
-			this.GrpAllCharacters.Text = "All characters";
+			this.GrpAllCharacters.Text = "All characters at current page";
 			// 
 			// GrpOneCharacter
 			// 
@@ -536,11 +609,16 @@
 			this.Controls.Add(this.GrpOneCharacter);
 			this.Controls.Add(this.GrpAllCharacters);
 			this.Controls.Add(this.TxtCharacter);
-			this.Controls.Add(this.BtnNext);
-			this.Controls.Add(this.LblCharacter);
-			this.Controls.Add(this.PictRenderText);
+            this.Controls.Add(this.TxtGlyph);
+            this.Controls.Add(this.BtnNext);
 			this.Controls.Add(this.BtnPrevious);
-			this.Controls.Add(this.BtnSetText);
+            this.Controls.Add(this.LblCharacter);
+			this.Controls.Add(this.PictRenderText);
+            this.Controls.Add(this.BtnPagePrev);
+            this.Controls.Add(this.BtnPageNext);
+            this.Controls.Add(this.TxtPageNumber);
+            this.Controls.Add(this.LblPageTotal);
+            this.Controls.Add(this.BtnSetText);
 			this.Controls.Add(this.BtnRenderText);
 			this.Controls.Add(this.PanelMouseColor);
 			this.Controls.Add(this.ChkGridFix);
@@ -601,18 +679,24 @@
 		private System.Windows.Forms.Button BtnSwapVertically;
 		private System.Windows.Forms.Button BtnOutline;
 		private System.Windows.Forms.Button BtnOutlineFont;
-		private System.Windows.Forms.Button BtnExtend256;
+        private System.Windows.Forms.TextBox TxtGlyphRange;
+        private System.Windows.Forms.Button BtnPagePrev;
+		private System.Windows.Forms.Button BtnPageNext;
 		private System.Windows.Forms.Button BtnRenderText;
 		private System.Windows.Forms.PictureBox PictRenderText;
 		private System.Windows.Forms.Button BtnSetText;
 		private System.Windows.Forms.Label LblCharacter;
 		private System.Windows.Forms.Button BtnPrevious;
 		private System.Windows.Forms.Button BtnNext;
-		private System.Windows.Forms.CheckBox ChkGridFix;
+        private System.Windows.Forms.TextBox TxtPageNumber;
+        private System.Windows.Forms.Label LblPageTotal;
+        private System.Windows.Forms.CheckBox ChkGridFix;
 		private System.Windows.Forms.Button BtnAllHeight;
 		private System.Windows.Forms.Button BtnAllWidth;
-		private System.Windows.Forms.TextBox TxtCharacter;
-		private System.Windows.Forms.GroupBox GrpAllCharacters;
+		private System.Windows.Forms.Button BtnAllBlankClear;
+        private System.Windows.Forms.TextBox TxtCharacter;
+        private System.Windows.Forms.TextBox TxtGlyph;
+        private System.Windows.Forms.GroupBox GrpAllCharacters;
 		private System.Windows.Forms.GroupBox GrpOneCharacter;
 		private System.Windows.Forms.CheckBox ChkOneAllCharacters;
 	}
