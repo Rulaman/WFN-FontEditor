@@ -1,3 +1,5 @@
+This version is updated by: ericoporto
+
 This is an updated version of Rulaman's font editor for WFN and SCI fonts in both its AGS plugin and standalone variants.
 
 It includes the following improvements, along with better performance when manipulating multiple glyphs:
