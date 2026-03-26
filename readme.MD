@@ -1,4 +1,4 @@
-This version is updated by: ericoporto
+This version is updated by: PacketLauncher
 
 This is an updated version of Rulaman's font editor for WFN and SCI fonts in both its AGS plugin and standalone variants.
 
